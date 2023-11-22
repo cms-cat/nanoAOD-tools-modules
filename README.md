@@ -84,3 +84,9 @@ python3 ./test/example_muonSF.py -i root://cms-xrd-global.cern.ch//store/mc/RunI
 ## Usage
 
 To use in your own analysis, you can use the standalone scripts in [`test`](test/) as an example.
+If you compiled this package correctly, you can import the modules in
+[`PhysicsTools/NATModules/python/modules`](PhysicsTools/NATModules/python/modules)
+as
+```
+from PhysicsTools.NATModules.modules.muonSF import *
+```
