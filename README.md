@@ -21,7 +21,7 @@ For example,
 <table>
 <tr>
 <td>
-CMSSW 11.3.4 ([Combine v9](http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/))
+CMSSW 11.3.4 (<a href="http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/">Combine v9</a>)
 </td>
 <td>
 CMSSW 12.4.8
