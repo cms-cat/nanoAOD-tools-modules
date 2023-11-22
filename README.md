@@ -29,6 +29,7 @@ CMSSW 12.4.8
 </tr>
 <tr>
 <td>
+
 ```bash
 export SCRAM_ARCH=slc7_amd64_gcc900
 cmsrel CMSSW_11_3_4
@@ -37,6 +38,7 @@ cmsenv
 ```
 </td>
 <td>
+
 ```bash
 export SCRAM_ARCH=slc7_amd64_gcc10
 cmsrel CMSSW_12_4_8
