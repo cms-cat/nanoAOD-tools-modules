@@ -25,9 +25,9 @@ cd $CMSSW_BASE/src/
 cmsenv
 ```
 
-### Install `nanoAOD-tools`
-Then install [`nanoAOD-tools`](https://github.com/cms-nanoAOD/nanoAOD-tools).
-Note that starting from CMSSW 1X.X, a basic version of `nanoAOD-tools` is included.
+### Install `nanoAOD-tools` (for CMSSW 13.0 or older)
+Install [`nanoAOD-tools`](https://github.com/cms-nanoAOD/nanoAOD-tools) to process nanoAOD files.
+Note that starting from CMSSW 13.0, a basic version of `nanoAOD-tools` is included.
 To install the standalone version, please do
 ```
 cd $CMSSW_BASE/src/
@@ -35,7 +35,7 @@ git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODT
 ```
 
 ### Install `NATModules`
-Now install this repository as `PhysicsTools/NATModules` and compile (`build`) everything:
+Now install this repository as `PhysicsTools/NATModules` and compile (build) everything:
 ```
 cd $CMSSW_BASE/src/
 cmsenv
@@ -43,7 +43,7 @@ git clone git@github.com:cms-cat/nanoAOD-tools-modules.git PhysicsTools/NATModul
 scram b
 ```
 
-### Install `correctionlib`
+### Install `correctionlib` (for CMSSW 11.2 or older)
 Starting from CMSSW 11.3,
 [`correctionlib`](https://github.com/cms-nanoAOD/correctionlib)
 should come pre-installed.
@@ -77,5 +77,10 @@ cp -r /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration data
 Run a module, for example
 ```
 cd $CMSSW_BASE/src/PhysicsTools/NATModules
-python3 ./test/example_muonSF.py -i
+python3 ./test/example_muonSF.py -i root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL16NanoAODv9/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/NANOAODSIM/20UL16JMENano_106X_mcRun2_asymptotic_v17-v1/2820000/11061525-9BB6-F441-9C12-4489135219B7.root
 ```
+
+
+## Usage
+
+To use in your own analysis, you can use the standalone scripts in [`test`](test/) as an example.
