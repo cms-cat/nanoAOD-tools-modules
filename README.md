@@ -2,9 +2,9 @@
 
 This repo provides some modules that can be used with the
 [`nanoAOD-tools`](https://github.com/cms-nanoAOD/nanoAOD-tools)
-framework for post-processing nanoAOD.
+framework for post-processing CMS's nanoAOD files.
 
-The modules add new branches with like lepton scale factors, using the
+The modules add new branches like lepton scale factors, using the
 [`correctionlib`](https://github.com/cms-nanoAOD/correctionlib)
 tool, and official
 [JSON correction files](https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration)
@@ -21,7 +21,7 @@ For example,
 <table>
 <tr>
 <td>
-CMSSW 11.3.4 (<a href="http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/">Combine v9</a>)
+CMSSW 11.3.4 (for <a href="http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/">combine v9</a>)
 </td>
 <td>
 CMSSW 12.4.8
@@ -48,7 +48,6 @@ cmsenv
 </td>
 </tr>
 </table>
-
 
 
 ### Install `nanoAOD-tools` (for CMSSW 12.6 or older)
