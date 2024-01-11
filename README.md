@@ -50,9 +50,9 @@ cmsenv
 </table>
 
 
-### Install `nanoAOD-tools` (for CMSSW 13.2 or older)
+### Install `nanoAOD-tools` (for CMSSW 12 or older, 13_0_X with X < 16, 13_1_X with X < 5, 13_2_X)
 Install [`nanoAOD-tools`](https://github.com/cms-nanoAOD/nanoAOD-tools) to process nanoAOD files.
-Note that starting from CMSSW 13.3, a basic version of `nanoAOD-tools` is included.
+Note that starting from CMSSW 13_0_16, 13_1_5 and 13_3_0, a basic version of `nanoAOD-tools` is included.
 To install the standalone version, please do
 ```bash
 cd $CMSSW_BASE/src/
