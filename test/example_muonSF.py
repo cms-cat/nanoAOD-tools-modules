@@ -13,7 +13,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NATModules.modules.muonSF import *
 
 # Set up the muon correction module
-muSF = MuonSF("data/POG/MUO/2016postVFP_UL/muon_Z.json.gz")
+muSF = MuonSF("data/POG/MUO/2016postVFP_UL/muon_Z_v2.json.gz")
 era = '2016postVFP_UL'
 
 # Add TrackerMuon reconstruction scale factor
