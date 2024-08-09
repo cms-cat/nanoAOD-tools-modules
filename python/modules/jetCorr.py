@@ -1,3 +1,10 @@
+###
+# Useful CMStalk thread on how implementing jet corrections: https://cms-talk.web.cern.ch/t/jes-for-2022-re-reco-cde-and-prompt-fg/32873/3
+# Minimal demo provided from JME POG: https://github.com/cms-jet/JECDatabase/blob/master/scripts/JERC2JSON/minimalDemo.py
+# TODO:
+# - Implementing JES uncertainties. TBD which scheme we want to implement
+###
+
 from __future__ import print_function
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
@@ -16,7 +23,7 @@ class jetJERC(Module):
             L2Key: key for L2 corrections
             L3Key: key for L3 corrections
             L2L3Key: key for residual corrections
-            smearKey: key for smearing term (None for Data)
+            smearKey: key for smearing formula (None for Data)
             JERKey: key for JER (None for Data)
             JERsfKey: key for JER scale factor (None for Data)
             overwritePt: replace value in the pt branch, and store the old one as "uncorrected_pt"
@@ -26,9 +33,14 @@ class jetJERC(Module):
         self.evaluator_JERC = correctionlib.CorrectionSet.from_file(json_JERC)
         self.evaluator_jer = correctionlib.CorrectionSet.from_file(json_JERsmear)
 
+        ## Starting from Run 3, the use of PUPPI jets eliminates the need for L1 corrections. To maintain compatibility with Run 2 scripts, a dummy file is provided.
         self.evaluator_L1 = self.evaluator_JERC[L1Key]
+        ## For the next step, there is a mismatch between the terminology in the twiki and the tags in correctionlib
+        ## MC-truth = L2 + L3
         self.evaluator_L2 = self.evaluator_JERC[L2Key]
         self.evaluator_L3 = self.evaluator_JERC[L3Key]
+        ## L2L3residuals should be applied only to data
+        ## A dummy file with all entries equal to 1 is provided for MC to have a common script for both data and MC
         self.evaluator_L2L3 = self.evaluator_JERC[L2L3Key]
 
         self.is_mc = False
@@ -86,26 +98,27 @@ class jetJERC(Module):
         pt_scale_dn = []
 
         for jet in jets:
-            if self.is_mc:
-                #### JEC ####
-                ## Jet in NanoAOD are already corrected
-                ## The correction should be removed and the latest one available should be applied
-                pt_raw = jet.pt * (1 - jet.rawFactor)
-                mass_raw = jet.mass * (1 - jet.rawFactor)
-                ## The three steps of JEC corrections are provided separately
-                pt_L1 = pt_raw * self.evaluator_L1.evaluate(jet.area, jet.eta, pt_raw, event.Rho_fixedGridRhoFastjetAll)
-                pt_L2 = pt_L1 * self.evaluator_L2.evaluate(jet.eta, pt_L1)
-                pt_L3 = pt_L2 * self.evaluator_L3.evaluate(jet.eta, pt_L2)
-                pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(jet.eta, pt_L3)
-                JEC = pt_JEC / pt_raw
-                mass_JEC = mass_raw * JEC
+            #### JEC ####
+            ## To be applied to both data and MC
+            ## Jet in NanoAOD are already corrected
+            ## The correction should be removed and the latest one available should be applied
+            pt_raw = jet.pt * (1 - jet.rawFactor)
+            mass_raw = jet.mass * (1 - jet.rawFactor)
+            ## The three steps of JEC corrections are provided separately
+            pt_L1 = pt_raw * self.evaluator_L1.evaluate(jet.area, jet.eta, pt_raw, event.Rho_fixedGridRhoFastjetAll)
+            pt_L2 = pt_L1 * self.evaluator_L2.evaluate(jet.eta, pt_L1)
+            pt_L3 = pt_L2 * self.evaluator_L3.evaluate(jet.eta, pt_L2)
+            pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(jet.eta, pt_L3)
+            JEC = pt_JEC / pt_raw
+            mass_JEC = mass_raw * JEC
 
+            if self.is_mc:
                 #### JER ####
                 ## Hybrid method is implemented [https://cms-jerc.web.cern.ch/JER/#smearing-procedures]
                 JER = self.evaluator_JER.evaluate(jet.eta, pt_JEC, event.Rho_fixedGridRhoFastjetAll)
                 ## GenMatching with genJet
                 delta_eta = jet.eta - gen_jets_eta
-                fixPhi = np.vectorize(self.fixPhi)
+                fixPhi = np.vectorize(self.fixPhi, otypes=[float])
                 delta_phi = fixPhi(jet.phi - gen_jets_phi)
                 pt_gen = np.where((np.abs(pt_JEC - gen_jets_pt) < 3 * pt_JEC * JER) & (np.sqrt(delta_eta**2 + delta_phi**2)<0.2), gen_jets_pt, -1.0)
                 pt_gen = pt_gen[pt_gen > 0][0] if np.any(pt_gen > 0) else -1. ## If no gen-matching, simply -1
@@ -130,23 +143,11 @@ class jetJERC(Module):
                 pt_smear_dn.append(pt_JEC_JER_dn)
                 mass_smear_up.append(mass_JEC_JER_up)
                 mass_smear_dn.append(mass_JEC_JER_dn)
-                pt_scale_up.append(8)
-                pt_scale_dn.append(8)
-
+                pt_scale_up.append(-1)
+                pt_scale_dn.append(-1)
             else:
-                #### JEC ####
-                ## Jet in NanoAOD are already corrected
-                ## The correction should be removed and the latest one available should be applied
-                pt_raw = jet.pt * (1 - jet.rawFactor)
-                mass_raw = jet.mass * (1 - jet.rawFactor)
-                ## The three steps of JEC corrections are provided separately
-                pt_L1 = pt_raw * self.evaluator_L1.evaluate(jet.area, jet.eta, pt_raw, event.Rho_fixedGridRhoFastjetAll)
-                pt_L2 = pt_L1 * self.evaluator_L2.evaluate(jet.eta, pt_L1)
-                pt_L3 = pt_L2 * self.evaluator_L3.evaluate(jet.eta, pt_L2)
-                pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(jet.eta, pt_L3)
-                JEC = pt_JEC / pt_raw
-                mass_JEC = mass_raw * JEC
-
+                ## Data
+                ## No JER for Data
                 pt_corr.append(pt_JEC)
                 pt_uncorr.append(pt_raw)
                 mass_corr.append(mass_JEC)
