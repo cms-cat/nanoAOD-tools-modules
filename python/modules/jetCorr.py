@@ -9,7 +9,6 @@ from __future__ import print_function
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 import os
-import random
 import numpy as np
 import correctionlib
 
