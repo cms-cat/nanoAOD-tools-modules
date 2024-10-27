@@ -1,1 +1,1 @@
-#include <ZZAnalysis/AnalysisStep/interface/MuonScaRe.h>
+#include <PhysicsTools/NATModules/interface/MuonScaRe.h>
