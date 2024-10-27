@@ -17,7 +17,7 @@
 
 #include <boost/math/special_functions/erf.hpp>
 #include <string>
-#include <ZZAnalysis/AnalysisStep/interface/MuonScaRe.h>
+#include <PhysicsTools/NATModules/interface/MuonScaRe.h>
 
 using namespace std;
 
