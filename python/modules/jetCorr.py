@@ -13,7 +13,7 @@ import numpy as np
 import correctionlib
 
 class jetJERC(Module):
-    def __init__(self, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False):
+    def __init__(self, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False):
         """Correct jets following recommendations of JME POG.
         Parameters:
             json_JERC: full path of json file with JERC corrections
@@ -28,6 +28,7 @@ class jetJERC(Module):
             overwritePt: replace value in the pt branch, and store the old one as "uncorrected_pt"
         """
         self.overwritePt = overwritePt
+        self.usePhiDependentJEC = usePhiDependentJEC
 
         self.evaluator_JERC = correctionlib.CorrectionSet.from_file(json_JERC)
         self.evaluator_jer = correctionlib.CorrectionSet.from_file(json_JERsmear)
@@ -105,7 +106,12 @@ class jetJERC(Module):
             mass_raw = jet.mass * (1 - jet.rawFactor)
             ## The three steps of JEC corrections are provided separately
             pt_L1 = pt_raw * self.evaluator_L1.evaluate(jet.area, jet.eta, pt_raw, event.Rho_fixedGridRhoFastjetAll)
-            pt_L2 = pt_L1 * self.evaluator_L2.evaluate(jet.eta, pt_L1)
+
+            if self.usePhiDependentJEC:
+                pt_L2 = pt_L1 * self.evaluator_L2.evaluate(jet.eta, jet.phi, pt_L1)
+            else:
+                pt_L2 = pt_L1 * self.evaluator_L2.evaluate(jet.eta, pt_L1)
+
             pt_L3 = pt_L2 * self.evaluator_L3.evaluate(jet.eta, pt_L2)
             pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(jet.eta, pt_L3)
             JEC = pt_JEC / pt_raw
