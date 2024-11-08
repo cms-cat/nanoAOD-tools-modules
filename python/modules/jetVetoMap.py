@@ -15,18 +15,19 @@ class jetVMAP(Module):
         self.veto_map_name = veto_map_name
         self.evaluator_JVMAP= correctionlib.CorrectionSet.from_file(json_JVMAP)
         self.evaluator_VETO = self.evaluator_JVMAP[corrName]
-        #print(f"Initialized jetVMAP module with veto map '{self.veto_map_name}' and correction '{corrName}'")
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         self.out.branch("Jet_vetoedEvent", "I", title="Flag for VetoMaps")
-        #print("Branch 'Jet_vetoedEvent' initialized to store event veto flags.")
     
     def fixPhi(self, phi):
+        epsilon = 1e-6  # Small offset to avoid boundary issues
         if phi > np.pi:
-            phi -= 2*np.pi
+            print(f"phi {phi} is greater than pi. Setting phi to pi - epsilon.")
+            phi = np.pi - epsilon
         elif phi < -np.pi:
-            phi += 2*np.pi
+            print(f"phi {phi} is less than -pi. Setting phi to -pi + epsilon.")
+            phi = -np.pi + epsilon
         return phi
 
     def analyze(self, event):
@@ -41,8 +42,8 @@ class jetVMAP(Module):
 
 
         for i, jet in enumerate(jets):
-            if (jet.pt> 15 and (jet.jetId ==2 or jet.jetId ==6) and jet.chEmEF < 0.9 and jet.neEmEF <0.9 and jet.muonIdx1 == -1):
-                #print(f"Jet {i} passed selection criteria.")
+            if (jet.pt> 15 and (jet.jetId ==2 or jet.jetId ==6) and jet.chEmEF < 0.9 and jet.neEmEF <0.9 and jet.muonIdx1 == -1 and jet.muonIdx2 == -1):
+
                 # Correct phi and evaluate veto map
                 phi = self.fixPhi(jet.phi)
                 veto_map_value = self.evaluator_VETO.evaluate(self.veto_map_name, jet.eta, phi)
@@ -54,5 +55,4 @@ class jetVMAP(Module):
 
         # Fill the branch with the veto result
         self.out.fillBranch("Jet_vetoedEvent", veto_flag)
-        #print(f"Event veto status filled with value: {veto_values}")
         return True
