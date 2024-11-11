@@ -18,7 +18,7 @@ class jetVMAP(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch("Jet_vetoedEvent", "I", title="Flag for VetoMaps")
+        self.out.branch("Flag_JetVetoed", "I", title="Event veto flag from Jet Veto Map")
     
     def fixPhi(self, phi):
         epsilon = 1e-6  # Small offset to avoid boundary issues
@@ -54,5 +54,5 @@ class jetVMAP(Module):
                     break  # Break out of the loop since we only need one veto to trigger
 
         # Fill the branch with the veto result
-        self.out.fillBranch("Jet_vetoedEvent", veto_flag)
+        self.out.fillBranch("Flag_JetVetoed", veto_flag)
         return True
