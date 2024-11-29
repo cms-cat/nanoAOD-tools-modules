@@ -23,10 +23,10 @@ class jetVMAP(Module):
     def fixPhi(self, phi):
         epsilon = 1e-6  # Small offset to avoid boundary issues
         if phi > np.pi:
-            print(f"phi {phi} is greater than pi. Setting phi to pi - epsilon.")
+            #print(f"phi {phi} is greater than pi. Setting phi to pi - epsilon.")
             phi = np.pi - epsilon
         elif phi < -np.pi:
-            print(f"phi {phi} is less than -pi. Setting phi to -pi + epsilon.")
+            #print(f"phi {phi} is less than -pi. Setting phi to -pi + epsilon.")
             phi = -np.pi + epsilon
         return phi
 
