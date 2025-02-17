@@ -13,7 +13,7 @@ import numpy as np
 import correctionlib
 
 class jetJERC(Module):
-    def __init__(self, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False):
+    def __init__(self, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, scaleTotalKey=None,smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False):
         """Correct jets following recommendations of JME POG.
         Parameters:
             json_JERC: full path of json file with JERC corrections
@@ -47,10 +47,12 @@ class jetJERC(Module):
         self.evaluator_JERsmear = None
         self.evaluator_JER = None
         self.evaluator_JERsf = None
+        self.evaluator_JES = None
         if smearKey != None: ## JER is applied only to MC
             self.evaluator_JERsmear = self.evaluator_jer[smearKey]
             self.evaluator_JER = self.evaluator_JERC[JERKey]
             self.evaluator_JERsf = self.evaluator_JERC[JERsfKey]
+            self.evaluator_JES = self.evaluator_JERC[scaleTotalKey]
             self.is_mc = True
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -66,6 +68,8 @@ class jetJERC(Module):
         if self.is_mc:
             self.out.branch("Jet_scaleUp_pt", "F", lenVar="nJet")
             self.out.branch("Jet_scaleDn_pt", "F", lenVar="nJet")
+            self.out.branch("Jet_scaleUp_mass", "F", lenVar="nJet")
+            self.out.branch("Jet_scaleDn_mass", "F", lenVar="nJet")
             self.out.branch("Jet_smearUp_pt", "F", lenVar="nJet")
             self.out.branch("Jet_smearDn_pt", "F", lenVar="nJet")
             self.out.branch("Jet_smearUp_mass", "F", lenVar="nJet")
@@ -96,6 +100,8 @@ class jetJERC(Module):
         mass_smear_dn = []
         pt_scale_up = []
         pt_scale_dn = []
+        mass_scale_up = []
+        mass_scale_dn = []
 
         for jet in jets:
             #### JEC ####
@@ -133,12 +139,18 @@ class jetJERC(Module):
                 JERsmear = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, event.event, JER, JERsf)
                 JERsmear_up = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, event.event, JER, JERsf_up)
                 JERsmear_dn = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, event.event, JER, JERsf_dn)
+                JESuncert = self.evaluator_JES.evaluate(jet.eta, pt_JEC)
+
                 pt_JEC_JER = pt_JEC * JERsmear
                 pt_JEC_JER_up = pt_JEC * JERsmear_up
                 pt_JEC_JER_dn = pt_JEC * JERsmear_dn
                 mass_JEC_JER = mass_JEC * JERsmear
                 mass_JEC_JER_up = mass_JEC * JERsmear_up
                 mass_JEC_JER_dn = mass_JEC * JERsmear_dn
+                pt_JES_up = pt_JEC * (1 + JESuncert)
+                pt_JES_dn = pt_JEC * (1 - JESuncert)
+                mass_JES_up = mass_JEC * (1 + JESuncert)
+                mass_JES_dn = mass_JEC * (1 - JESuncert)
 
                 pt_corr.append(pt_JEC_JER)
                 pt_uncorr.append(pt_raw)
@@ -148,8 +160,10 @@ class jetJERC(Module):
                 pt_smear_dn.append(pt_JEC_JER_dn)
                 mass_smear_up.append(mass_JEC_JER_up)
                 mass_smear_dn.append(mass_JEC_JER_dn)
-                pt_scale_up.append(-1)
-                pt_scale_dn.append(-1)
+                pt_scale_up.append(pt_JES_up)
+                pt_scale_dn.append(pt_JES_dn)
+                mass_scale_up.append(mass_JES_up)
+                mass_scale_dn.append(mass_JES_dn)
             else:
                 ## Data
                 ## No JER for Data
@@ -174,5 +188,7 @@ class jetJERC(Module):
             self.out.fillBranch("Jet_smearDn_mass", mass_smear_dn)
             self.out.fillBranch("Jet_scaleUp_pt", pt_scale_up)
             self.out.fillBranch("Jet_scaleDn_pt", pt_scale_dn)
+            self.out.fillBranch("Jet_scaleUp_mass", mass_scale_up)
+            self.out.fillBranch("Jet_scaleDn_mass", mass_scale_dn)
 
         return True
