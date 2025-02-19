@@ -22,6 +22,7 @@ class jetJERC(Module):
             L2Key: key for L2 corrections
             L3Key: key for L3 corrections
             L2L3Key: key for residual corrections
+            scaleTotalKey : key for JES uncertainties
             smearKey: key for smearing formula (None for Data)
             JERKey: key for JER (None for Data)
             JERsfKey: key for JER scale factor (None for Data)
