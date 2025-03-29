@@ -15,7 +15,7 @@ import correctionlib
 from math import pi
 
 class eleScaleRes(Module):
-    def __init__(self, json, scaleKey=None, smearKey=None, overwritePt=False):
+    def __init__(self, json, scaleKey=None, smearKey=None, overwritePt=False, EtDependent=False):
         """Add branches for electron scale and resolution corrections.
         Parameters:
             json: full path of json file
@@ -28,14 +28,20 @@ class eleScaleRes(Module):
         if (smearKey != None and scaleKey == None ) :
             raise ValueError("eleScaleResProducer: scaleKey is required when smearKey is set (ie in MC)")
         self.overwritePt = overwritePt
+        self.EtDependent = EtDependent
         
         evaluator = correctionlib.CorrectionSet.from_file(json)
         self.evaluator_scale = None
         self.evaluator_smear = None
         self.is_mc = False
 
-        if scaleKey != None :
-            self.evaluator_scale = evaluator[scaleKey]            
+        if self.EtDependent :
+            if scaleKey != None :
+                self.evaluator_scale = evaluator.compound[scaleKey]
+        else:
+            if scaleKey != None :
+                self.evaluator_scale = evaluator[scaleKey]
+
         if smearKey != None :
             self.evaluator_smear = evaluator[smearKey]
             self.is_mc = True
@@ -68,21 +74,34 @@ class eleScaleRes(Module):
                 # The seed is unique by event and electron.
                 # A fixed entropy value is also included to decorrelate different modules doing similar things.
                 rng = np.random.default_rng(seed=np.random.SeedSequence([event.luminosityBlock, event.event, int(abs((ele.phi/pi)%1)*1e12), 5402201385]))
-                rho = self.evaluator_smear.evaluate("rho", ele.eta, ele.r9)
+
+                if self.EtDependent:
+                    rho = self.evaluator_smear.evaluate("smear", ele.pt, ele.r9, abs(ele.eta))
+                else:
+                    rho = self.evaluator_smear.evaluate("rho", ele.eta, ele.r9)
                 smearing = rng.normal(loc=1., scale=rho)
                 pt_corr.append(smearing * ele.pt)
 
-                unc_rho = self.evaluator_smear.evaluate("err_rho", ele.eta, ele.r9)
+                if self.EtDependent:
+                    unc_rho = self.evaluator_smear.evaluate("esmear", ele.pt, ele.r9, abs(ele.eta))
+                else:
+                    unc_rho = self.evaluator_smear.evaluate("err_rho", ele.eta, ele.r9)
                 smearing_up = rng.normal(loc=1., scale=rho + unc_rho)
                 smearing_dn = rng.normal(loc=1., scale=rho - unc_rho)
                 pt_smear_up.append(smearing_up * ele.pt)
                 pt_smear_dn.append(smearing_dn * ele.pt)
 
-                scale_MC_unc = self.evaluator_scale.evaluate("total_uncertainty", ele.seedGain, float(event.run), ele.eta, ele.r9, ele.pt)
+                if self.EtDependent :
+                    scale_MC_unc = self.evaluator_scale.evaluate("escale", float(event.run), ele.eta, ele.r9, abs(ele.eta), ele.pt, float(ele.seedGain))
+                else:
+                    scale_MC_unc = self.evaluator_scale.evaluate("total_uncertainty", ele.seedGain, float(event.run), ele.eta, ele.r9, ele.pt)
                 pt_scale_up.append((1+scale_MC_unc) * ele.pt)
                 pt_scale_dn.append((1-scale_MC_unc) * ele.pt)
             else :
-                scale = self.evaluator_scale.evaluate("total_correction", ele.seedGain, float(event.run), ele.eta, ele.r9, ele.pt)
+                if self.EtDependent :
+                    scale = self.evaluator_scale.evaluate("scale", float(event.run), ele.eta, ele.r9, abs(ele.eta), ele.pt, float(ele.seedGain))
+                else:
+                    scale = self.evaluator_scale.evaluate("total_correction", ele.seedGain, float(event.run), ele.eta, ele.r9, ele.pt)
                 pt_corr.append(scale * ele.pt)
 
         if self.overwritePt :
