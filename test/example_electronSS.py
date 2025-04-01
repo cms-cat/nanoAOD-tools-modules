@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-###
-# This is an example of configuring and using the electron scale/smearing module.
-###
+"""This is an example of configuring and using the electron scale/smearing module."""
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NATModules.modules.eleScaleRes import eleScaleRes
    
@@ -10,10 +9,14 @@ EtDependent = True
 # Set up the Electron correction module, for 2022EE MC
 if EtDependent:
   json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS_EtDependent.json.gz"
+  scaleKey = "EGMScale_Compound_Ele_2022postEE"
+  smearKey = "EGMSmearAndSyst_ElePTsplit_2022postEE"
 else:
   json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS.json.gz"
+  scaleKey = "Scale"
+  smearKey = "Smearing" 
 
-eleSS = eleScaleRes(json_path, "Scale", "Smearing", True, EtDependent)
+eleSS = eleScaleRes(json_path, scaleKey, smearKey, True, EtDependent)
 # Settings for post-processor
 from argparse import ArgumentParser
 parser = ArgumentParser(description="Process nanoAOD files and add branches",epilog="Good luck!")

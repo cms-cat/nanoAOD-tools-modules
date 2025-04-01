@@ -1,7 +1,7 @@
-# Modules for `nanoAOD-tools`
+# Modules for `NanoAODTools`
 
 This repo provides some modules that can be used with the
-[`nanoAOD-tools`](https://github.com/cms-nanoAOD/nanoAOD-tools)
+[`NanoAODTools`](https://github.com/cms-sw/cmssw/tree/master/PhysicsTools/NanoAODTools)
 framework for post-processing CMS's nanoAOD files.
 
 The modules add new branches like lepton scale factors, using the
@@ -14,49 +14,12 @@ provided by the CMS POGs.
 ## Installation
 
 ### Install CMSSW
-First, install your favorite CMSSW release.
-If you rely on `correctionlib` and `python3`,
-it is strongly recommend to use CMSSW 11.3 or newer.
-For example,
-<table>
-<tr>
-<td>
-CMSSW 11.3.4 (for <a href="http://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/">combine v9</a>)
-</td>
-<td>
-CMSSW 12.4.8
-</td>
-</tr>
-<tr>
-<td>
+First, install your favorite CMSSW release. Recent correction files require correctionlib >=2.6 which is provided in recent CMSSW releases, eg. CMSSW 14.
 
 ```bash
-export SCRAM_ARCH=slc7_amd64_gcc900
-cmsrel CMSSW_11_3_4
-cd CMSSW_11_3_4/src
+cmsrel CMSSW_14_1_6
+cd CMSSW_14_1_6/src
 cmsenv
-```
-</td>
-<td>
-
-```bash
-export SCRAM_ARCH=slc7_amd64_gcc10
-cmsrel CMSSW_12_4_8
-cd CMSSW_12_4_8/src/
-cmsenv
-```
-</td>
-</tr>
-</table>
-
-
-### Install `nanoAOD-tools` (for CMSSW 12 or older, 13_0_X with X < 16, 13_1_X with X < 5, 13_2_X)
-Install [`nanoAOD-tools`](https://github.com/cms-nanoAOD/nanoAOD-tools) to process nanoAOD files.
-Note that starting from CMSSW 13_0_16, 13_1_5 and 13_3_0, a basic version of `nanoAOD-tools` is included.
-To install the standalone version, please do
-```bash
-cd $CMSSW_BASE/src/
-git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 ```
 
 ### Install `NATModules`
@@ -68,12 +31,13 @@ git clone git@github.com:cms-cat/nanoAOD-tools-modules.git PhysicsTools/NATModul
 scram b
 ```
 
-### Install `correctionlib` (for CMSSW 11.2 or older)
-Starting from CMSSW 11.3,
-[`correctionlib`](https://github.com/cms-nanoAOD/correctionlib)
-should come pre-installed.
-To install yourself for older CMSSW versions,
-please see have a look at [documentation](https://cms-nanoaod.github.io/correctionlib/).
+### For very old CMSSW releases
+
+In CMSSW 12 or older, 13_0_X with X < 16, 13_1_X with X < 5, 13_2_X, `NanoAODTools` must be installed manually (it is included in release starting from CMSSW 13_0_16, 13_1_5 and 13_3_0). It can be [taken from the CMSSW release area](CMSSW https://github.com/cms-sw/cmssw/tree/master/PhysicsTools/NanoAODTools).
+
+In CMSSW 11.2 or older, [`correctionlib`](https://github.com/cms-nanoAOD/correctionlib) must also be installed manually (it is distrubuted with CMSSW starting from CMSSW 11.3)
+
+To install it yourself, please see have a look at [documentation](https://cms-nanoaod.github.io/correctionlib/).
 Note that `correctionlib` works best for `python3`.
 
 ### Install `correctionlib` data
@@ -90,8 +54,8 @@ or clone via Kerberos, where `$USER` is your CERN lxplus name:
 kinit $USER@CERN.CH
 git clone https://$USER:@gitlab.cern.ch:8443/cms-nanoAOD/jsonpog-integration.git
 ```
-Alternatively, this repository is regularly synchronized to `/cvmfs/`,
-so if your system has access, you can copy the latest version
+Alternatively, this repository is regularly synchronized to `/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/`,
+so if your system has access, you can copy (or link) the latest version
 ```bash
 cd $CMSSW_BASE/src/PhysicsTools/NATModules
 cp -r /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration data

@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-###
-# This is an example of configuring and using the muon scale/smearing module.
-###
+"""This is an example of configuring and using the muon scale/smearing module."""
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NATModules.modules.muonScaleRes import *
 
 # Set up the correction module.
 # json files are not included in the central cvmfs area at the time of release.
 # see https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/tree/master/corrections for details.
-muSS = muonScaleRes("2022EE_schemaV2.json.gz", overwritePt=True, is_mc=True)
+
+# FIXME: code matches corrections at this revision: https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/tree/7650e0f35858bacf6118d84ef13a62f7da77913b/corrections
+# it must be updated for subsequent developments.
+muSS = muonScaleRes("2022EE_schemaV2.json", overwritePt=True, is_mc=True)
 
 # Settings for post-processor
 from argparse import ArgumentParser
