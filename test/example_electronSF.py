@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-###
-# This is an example of configuring and calling a generic correctionlib module.
-# Notes:
-# - For the sake of speed, it is important to apply a preselection whenever possible.
-# - Also, it is advisable to insert correction modules like this after modules
-#   that apply selections, so that corrections are not computed for events that
-#   are then discarded.
-# - Find all available corrections and parameters by running in the command
-#     correction summary POG/EGM/2016postVFP_UL/electron.json.gz
-###
+"""This is an example of configuring and calling a generic correctionlib module.
+Notes:
+- For the sake of speed, it is important to apply a preselection whenever possible.
+- Also, it is advisable to insert correction modules like this after modules
+  that apply selections, so that corrections are not computed for events that
+  are then discarded.
+- Find all available corrections and parameters by running in the command
+    correction summary POG/EGM/2016postVFP_UL/electron.json.gz
+"""
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NATModules.modules.electronSF import *
 
 # Set up the muon correction module
-eleSF = ElectronSF("data/POG/EGM/2016postVFP_UL/electron.json.gz")
+eleSF = ElectronSF("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2016postVFP_UL/electron.json.gz")
 set = 'UL-Electron-ID-SF'
 era = '2016postVFP'
 

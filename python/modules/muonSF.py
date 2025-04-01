@@ -1,11 +1,8 @@
-###
-# Compute muon SFs using correctionlib, and store in new branch.
-# Load as
-#  muSF = muonSF("POG/MUO/2016postVFP_UL/muon_Z.json.gz")
-#  muSF.addCorrection("NUM_TrackerMuons_DEN_genTracks", "2016postVFP_UL", "sf")
-#  muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP_UL", "systdown", "sfsysdn")
-#  muSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP_UL", "systup", "sfsysup")
-###
+"""Compute muon SFs using correctionlib, and store in new branch.
+
+See example in test/example_muonSF.py for usage.
+"""
+
 from __future__ import print_function
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from correctionlib import CorrectionSet
@@ -18,27 +15,25 @@ class MuonSF(Module):
             collection: name of the collection to be corrected
         Use addCorrection() to set which factors should be added.
         """
+
         self.collection = collection
         self.names = [ ]
-        self.scenarios = [ ]
         self.valtypes = [ ]
         self.varnames = [ ]
         self.evaluators = [ ]
         self.evaluator = CorrectionSet.from_file(json)
     
-    def addCorrection(self, name, scenario, valtype, varname=None):
+    def addCorrection(self, name, valtype, varname=None):
         """
         Call this method to add a correction factor.
         Parameters:
             name: name of the corrections, e.g. 'NUM_TrackerMuons_DEN_genTracks'
-            scenario: year/scenario, e.g. '2016postVFP_UL'
             valtype: type of factor, e.g. 'sf', 'systup', ...
             varname: branch name suffix (defaults to valtype)
         """
         if varname==None: # default suffix
           varname = valtype
         self.names.append(name)
-        self.scenarios.append(scenario)
         self.valtypes.append(valtype)
         self.varnames.append(f"{self.collection}_{varname}") # branch name
         self.evaluators.append(self.evaluator[name])
@@ -59,9 +54,9 @@ class MuonSF(Module):
             sfs = [1.]*event.nMuon
             for iMu in range(event.nMuon):
                 try:
-                    sfs[iMu] = self.evaluators[ic].evaluate(self.scenarios[ic], etas[iMu], pts[iMu], self.valtypes[ic])
+                    sfs[iMu] = self.evaluators[ic].evaluate(etas[iMu], pts[iMu], self.valtypes[ic])
                 except:
-                    print(f"MuonSF.analyze: Exception for {self.scenarios[ic]}, eta={etas[iMu]:6.4f}, pt={pts[iMu]:6.4f}, {self.valtypes[ic]}")
+                    print(f"MuonSF.analyze: Exception for eta={etas[iMu]:6.4f}, pt={pts[iMu]:6.4f}, {self.valtypes[ic]}")
                     pass # default sf = 1
             self.out.fillBranch(self.varnames[ic], sfs)
         return True

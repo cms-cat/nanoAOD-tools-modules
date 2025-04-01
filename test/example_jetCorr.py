@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-###
-# This is an example of configuring and using the module for correcting jets.
-###
+"""This is an example of configuring and using the module for correcting jets."""
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NATModules.modules.jetCorr import jetJERC
 

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-#
-# Example of using the PU reweight module.
-# Creates a skimmed tree and a histogram file with original and reweighed PU profiles.
-#
+"""Example of using the PU reweight module.
+
+Creates a skimmed tree and a histogram file with original and reweighed PU profiles.
+"""
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
