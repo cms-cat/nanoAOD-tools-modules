@@ -5,9 +5,15 @@
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NATModules.modules.eleScaleRes import eleScaleRes
    
-# Set up the muon correction module, for 2022EE MC
-eleSS = eleScaleRes("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS.json.gz", "Scale", "Smearing", True)
+EtDependent = True
 
+# Set up the Electron correction module, for 2022EE MC
+if EtDependent:
+  json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS_EtDependent.json.gz"
+else:
+  json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS.json.gz"
+
+eleSS = eleScaleRes(json_path, "Scale", "Smearing", True, EtDependent)
 # Settings for post-processor
 from argparse import ArgumentParser
 parser = ArgumentParser(description="Process nanoAOD files and add branches",epilog="Good luck!")
