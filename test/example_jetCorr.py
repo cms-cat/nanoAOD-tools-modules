@@ -15,8 +15,10 @@ smearKey = "JERSmear"
 JERKey = "Summer22_22Sep2023_JRV1_MC_PtResolution_AK4PFPuppi"
 JERsfKey = "Summer22_22Sep2023_JRV1_MC_ScaleFactor_AK4PFPuppi"
 overwritePt = True
+usePhiDependentJEC = False
+useRunDependentJEC = False
 
-jetCorrected = jetJERC(json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key, scaleTotalKey, smearKey, JERKey, JERsfKey, overwritePt)
+jetCorrected = jetJERC(json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key, scaleTotalKey, smearKey, JERKey, JERsfKey, overwritePt, usePhiDependentJEC, useRunDependentJEC)
 
 # Settings for post-processor
 from argparse import ArgumentParser
