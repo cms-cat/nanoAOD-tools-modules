@@ -133,6 +133,11 @@ class jetJERC(Module):
             if self.is_mc:
                 #### JER ####
                 ## Hybrid method is implemented [https://cms-jerc.web.cern.ch/JER/#smearing-procedures]
+                ## except in the eta region 2.5 < |eta| < 3.0 where the Scaling method is implemented
+                ## Scaling method was introduced following JME recommendations to handle the 'Horns issue'
+                ## Ref: https://gitlab.cern.ch/cms-jetmet/coordination/coordination/-/issues/113
+                ## TODO: This should be removed once a JSON-level fix is implemented.
+
                 JER = self.evaluator_JER.evaluate(jet.eta, pt_JEC, event.Rho_fixedGridRhoFastjetAll)
                 ## GenMatching with genJet
                 delta_eta = jet.eta - gen_jets_eta
@@ -140,6 +145,7 @@ class jetJERC(Module):
                 delta_phi = fixPhi(jet.phi - gen_jets_phi)
                 pt_gen = np.where((np.abs(pt_JEC - gen_jets_pt) < 3 * pt_JEC * JER) & (np.sqrt(delta_eta**2 + delta_phi**2)<0.2), gen_jets_pt, -1.0)
                 pt_gen = pt_gen[pt_gen > 0][0] if np.any(pt_gen > 0) else -1. ## If no gen-matching, simply -1
+
                 JERsf = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "nom")
                 JERsf_up = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "up")
                 JERsf_dn = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "down")
@@ -148,12 +154,20 @@ class jetJERC(Module):
                 JERsmear_dn = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, event.event, JER, JERsf_dn)
                 JESuncert = self.evaluator_JES.evaluate(jet.eta, pt_JEC)
 
-                pt_JEC_JER = pt_JEC * JERsmear
+                if pt_gen < 0 and (2.5 < abs(jet.eta) < 3):
+                    JERsmear_nominal = 1.0
+                    JERsmear_up = JERsmear_up / JERsmear
+                    JERsmear_dn = JERsmear_dn / JERsmear
+                else:
+                    JERsmear_nominal = JERsmear
+
+                pt_JEC_JER = pt_JEC * JERsmear_nominal
                 pt_JEC_JER_up = pt_JEC * JERsmear_up
                 pt_JEC_JER_dn = pt_JEC * JERsmear_dn
-                mass_JEC_JER = mass_JEC * JERsmear
+                mass_JEC_JER = mass_JEC * JERsmear_nominal
                 mass_JEC_JER_up = mass_JEC * JERsmear_up
                 mass_JEC_JER_dn = mass_JEC * JERsmear_dn
+
                 pt_JES_up = pt_JEC * (1 + JESuncert)
                 pt_JES_dn = pt_JEC * (1 - JESuncert)
                 mass_JES_up = mass_JEC * (1 + JESuncert)
