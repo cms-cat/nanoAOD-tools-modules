@@ -11,9 +11,13 @@ class MuonScaRe {
 public:
   MuonScaRe(std::string json);
 
-  double pt_resol(double pt, double eta, float nL, std::string var);
+  double pt_resol(double pt, double eta, float nL);
   
-  double pt_scale(bool is_data, double pt, double eta, double phi, int charge, std::string var);
+  double pt_scale(bool is_data, double pt, double eta, double phi, int charge);
+
+  double pt_resol_var(double pt_woresol, double pt_wresol, double eta, std::string updn);
+
+  double pt_scale_var(double pt, double eta, double phi, int charge, std::string updn);
 
   // A per-muon seed can be optionally set to achieve deterministic random
   // smearing. 

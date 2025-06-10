@@ -22,19 +22,38 @@ class muonScaleRes(Module):
         self.corrModule = MuonScaRe(json)
 
 
-    def getPtCorr(self, muon, var = "nom") :
-        if muon.pt > self.maxPt : 
-            return muon.pt
+    def getPtCorr(self, muon):
+        if muon.pt > self.maxPt:
+            return muon.pt, muon.pt  # no correction above maxPt
+
         isData = int(not self.is_mc)
-        scale_corr = self.corrModule.pt_scale(isData, muon.pt, muon.eta, muon.phi, muon.charge, var)
-        pt_corr = scale_corr
+        scale_corr = self.corrModule.pt_scale(isData, muon.pt, muon.eta, muon.phi, muon.charge)
+        #print(f"[getPtCorr] Muon pt {muon.pt:.2f} scale corrected to {scale_corr:.2f} (is_mc={self.is_mc})")
 
         if self.is_mc:
-            smear_corr = self.corrModule.pt_resol(scale_corr, muon.eta, muon.nTrackerLayers, var)
-            pt_corr = smear_corr
+            smear_corr = self.corrModule.pt_resol(scale_corr, muon.eta, muon.nTrackerLayers)
+            #print(f"muon.eta, muon.nTrackerLayers", muon.eta, muon.nTrackerLayers)
+            #if abs(smear_corr) > 10*muon.pt:
+                #print(f"muon.eta, muon.nTrackerLayers", muon.eta, muon.nTrackerLayers)
+                #print(f"[getPtCorr] Muon pt {scale_corr:.2f} smeared to {smear_corr:.2f} (MC smear applied)")
+            return scale_corr, smear_corr  # MC: return both
+        else:
+            #print(f"[getPtCorr] Data: no smearing, scale_corr used twice")
+            return scale_corr, scale_corr  # Data: no smearing, return scale_corr twice
 
-        return pt_corr
+    def getPtVarRes(self, muon, pt_corr_scale, pt_corr_scaleres, updn):
+        """Handle Resolution variations"""
+        if muon.pt > self.maxPt:
+            return muon.pt
+        
+        return self.corrModule.pt_resol_var(pt_corr_scale, pt_corr_scaleres, muon.eta, updn)
 
+    def getPtVarScale(self, muon, pt_corr_scaleres, updn):
+        """Handle Scale variations"""
+        if muon.pt > self.maxPt:
+            return muon.pt
+
+        return self.corrModule.pt_scale_var(pt_corr_scaleres, muon.eta, muon.phi, muon.charge, updn)
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
@@ -44,8 +63,10 @@ class muonScaleRes(Module):
         else:
             self.out.branch("Muon_corrected_pt", "F", lenVar="nMuon")
         if self.is_mc:
-            self.out.branch("Muon_syst_pt", "F", lenVar="nMuon")
-            self.out.branch("Muon_stat_pt", "F", lenVar="nMuon")
+            self.out.branch("Muon_scaleUp_pt", "F", lenVar="nMuon")
+            self.out.branch("Muon_scaleDn_pt", "F", lenVar="nMuon")
+            self.out.branch("Muon_smearUp_pt", "F", lenVar="nMuon")
+            self.out.branch("Muon_smearDn_pt", "F", lenVar="nMuon")
 
 
     def analyze(self, event):
@@ -55,9 +76,13 @@ class muonScaleRes(Module):
         muons = Collection(event, "Muon")
 
         pt_corr = [0.]*len(muons)
+        pt_corr_scale = [0.]*len(muons)
+
         if self.is_mc:
-            pt_syst = [0.]*len(muons)
-            pt_stat = [0.]*len(muons)
+            scaleUp_pt = [0.]*len(muons)
+            scaleDn_pt = [0.]*len(muons)
+            smearUp_pt = [0.]*len(muons)
+            smearDn_pt = [0.]*len(muons)
                 
         for imu, muon in enumerate(muons):
             # Set up a deterministic random seed.
@@ -66,12 +91,22 @@ class muonScaleRes(Module):
             seedSeq = np.random.SeedSequence([event.luminosityBlock, event.event, int(abs((muon.phi/pi*100.)%1)*1e10), 351740215])
             self.corrModule.setSeed(int(seedSeq.generate_state(1,np.uint64)[0]))
 
-            pt_corr[imu] = self.getPtCorr(muon, "nom")
+            #print(f"\n[analyze] Muon {imu} seed set to {seed}")
+            #print(f"[analyze] Muon {imu} original pt: {muon.pt:.2f}")
+
+            #pt_corr[imu] = self.getPtCorr(muon)
+
+            pt_corr_scale[imu], pt_corr[imu] = self.getPtCorr(muon)
+
+            #print(f"[analyze] Muon {imu} scale corrected pt: {pt_corr_scale[imu]:.2f}")
+            #print(f"[analyze] Muon {imu} final corrected pt: {pt_corr[imu]:.2f}")
 
             if self.is_mc:
-                # TODO: Check. Are we assuming up=dn?
-                pt_syst[imu] = self.getPtCorr(muon, "syst")
-                pt_stat[imu] = self.getPtCorr(muon, "stat")
+                scaleUp_pt[imu] = self.getPtVarScale(muon, pt_corr[imu], "up")
+                scaleDn_pt[imu] = self.getPtVarScale(muon, pt_corr[imu], "dn")
+
+                smearUp_pt[imu] = self.getPtVarRes(muon,pt_corr_scale[imu],pt_corr[imu],"up")
+                smearDn_pt[imu] = self.getPtVarRes(muon,pt_corr_scale[imu],pt_corr[imu],"dn")
 
         if self.overwritePt :
             pt_uncorr = list(mu.pt for mu in muons)
@@ -81,8 +116,11 @@ class muonScaleRes(Module):
             self.out.fillBranch("Muon_corrected_pt", pt_corr)
 
         if self.is_mc:
-            self.out.fillBranch("Muon_syst_pt", pt_syst)
-            self.out.fillBranch("Muon_stat_pt", pt_stat)
+            self.out.fillBranch("Muon_scaleUp_pt", scaleUp_pt)
+            self.out.fillBranch("Muon_scaleDn_pt", scaleDn_pt)
+            self.out.fillBranch("Muon_smearUp_pt", smearUp_pt)
+            self.out.fillBranch("Muon_smearDn_pt", smearDn_pt)
+
 
         return True
 
