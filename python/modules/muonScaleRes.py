@@ -6,7 +6,7 @@ from math import pi
 from ROOT import MuonScaRe
 
 class muonScaleRes(Module):
-    def __init__(self, json, is_mc, overwritePt=False, maxPt=200.):
+    def __init__(self, json, is_mc, overwritePt=False, maxPt=200., minPt=26.):
         """Add branches for muon scale and resolution corrections.
         Parameters:
             json: full path of json file
@@ -18,12 +18,13 @@ class muonScaleRes(Module):
         self.is_mc = is_mc
         self.overwritePt = overwritePt
         self.maxPt = maxPt
+        self.minPt = minPt
         
         self.corrModule = MuonScaRe(json)
 
 
     def getPtCorr(self, muon):
-        if muon.pt > self.maxPt:
+        if muon.pt < self.minPt or muon.pt > self.maxPt:
             return muon.pt, muon.pt  # no correction above maxPt
 
         isData = int(not self.is_mc)
@@ -43,14 +44,14 @@ class muonScaleRes(Module):
 
     def getPtVarRes(self, muon, pt_corr_scale, pt_corr_scaleres, updn):
         """Handle Resolution variations"""
-        if muon.pt > self.maxPt:
+        if muon.pt < self.minPt or muon.pt > self.maxPt:
             return muon.pt
         
         return self.corrModule.pt_resol_var(pt_corr_scale, pt_corr_scaleres, muon.eta, updn)
 
     def getPtVarScale(self, muon, pt_corr_scaleres, updn):
         """Handle Scale variations"""
-        if muon.pt > self.maxPt:
+        if muon.pt < self.minPt or muon.pt > self.maxPt:
             return muon.pt
 
         return self.corrModule.pt_scale_var(pt_corr_scaleres, muon.eta, muon.phi, muon.charge, updn)
