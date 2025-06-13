@@ -106,6 +106,8 @@ double MuonScaRe::get_rndm(double eta, float nL) {
     
     // instantiate CB and get random number following the CB
     CrystalBall cb(mean, sigma, alpha, n);
+    //std::cout<<"cb.invcdf(rng.Rndm())"<<cb.invcdf(rng.Rndm())<<std::endl;
+    //std::cout<<"rng.Rndm()"<<rng.Rndm()<<std::endl;
     return cb.invcdf(rng.Rndm());
 }
 
@@ -138,23 +140,72 @@ double MuonScaRe::get_k(double eta, string var) {
 }
 
 
-double MuonScaRe::pt_resol(double pt, double eta, float nL, string var) {
+double MuonScaRe::pt_resol(double pt, double eta, float nL) {
 
     // load correction values
     double rndm = (double) get_rndm(eta, nL);
     double std = (double) get_std(pt, eta, nL);
-    double k = (double) get_k(eta, var);
+    double k = (double) get_k(eta, "nom");
 
     // calculate corrected value and return original value if a parameter is nan
     double ptc = pt * ( 1 + k * std * rndm);
     if (isnan(ptc)) ptc = pt;
+
+    //if (ptc > 10*pt) std::cout<<"rndm, std, k"<< rndm <<" " << std << " " << k << std::endl;
+
     return ptc;
 }
 
+double MuonScaRe::pt_resol_var(double pt_woresol, double pt_wresol, double eta, string updn){
 
-double MuonScaRe::pt_scale(bool is_data, double pt, double eta, double phi, int charge, string var) {
+    double k = (double) get_k(eta, "nom");
+
+    if (k==0) return pt_wresol;
+
+    double k_unc = cset->at("k_mc")->evaluate({abs(eta), "stat"});
+
+    double std_x_rndm = (pt_wresol / pt_woresol - 1) / k;
+
+    double pt_var = pt_wresol;
+
+    if (updn=="up"){
+        pt_var = pt_woresol * (1 + (k+k_unc) * std_x_rndm);
+    }
+    else if (updn=="dn"){
+        pt_var = pt_woresol * (1 + (k-k_unc) * std_x_rndm);
+    }
+    else {
+        cout << "ERROR: updn must be 'up' or 'dn'" << endl;
+    }
+
+    return pt_var;
+}
+
+
+double MuonScaRe::pt_scale(bool is_data, double pt, double eta, double phi, int charge) {
   
-    double a = cset->at(is_data?"a_data":"a_mc")->evaluate({eta, phi, var});
-    double m = cset->at(is_data?"m_data":"m_mc")->evaluate({eta, phi, var});
+    double a = cset->at(is_data?"a_data":"a_mc")->evaluate({eta, phi, "nom"});
+    double m = cset->at(is_data?"m_data":"m_mc")->evaluate({eta, phi, "nom"});
     return 1. / (m/pt + charge * a);
+}
+
+
+double MuonScaRe::pt_scale_var(double pt, double eta, double phi, int charge, string updn) {
+
+    double stat_a = cset->at("a_mc")->evaluate({eta, phi, "stat"});
+    double stat_m = cset->at("m_mc")->evaluate({eta, phi, "stat"});
+    double stat_rho = cset->at("m_mc")->evaluate({eta, phi, "rho_stat"});
+
+    double unc = pt*pt*sqrt(stat_m*stat_m / (pt*pt) + stat_a*stat_a + 2*charge*stat_rho*stat_m/pt*stat_a);
+
+    double pt_var = pt;
+
+    if (updn=="up"){
+        pt_var = pt + unc;
+    }
+    else if (updn=="dn"){
+        pt_var = pt - unc;
+    }
+
+    return pt_var;
 }
