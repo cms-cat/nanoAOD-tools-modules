@@ -1,3 +1,6 @@
+"""Add jet veto map flag to jets.
+See example in test/example_jetVeto.py for usage.
+"""
 from __future__ import print_function
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection

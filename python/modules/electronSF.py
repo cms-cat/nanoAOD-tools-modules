@@ -1,11 +1,13 @@
-###
-# Compute muon SFs using correctionlib, and store in new branch.
-# Load as
-#  eleSF = electronSF("POG/EGM/2016postVFP_UL/electron.json.gz")
-#  eleSF.addCorrection("NUM_TrackerMuons_DEN_genTracks", "2016postVFP", "sf")
-#  eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfdown", "sfsysdn")
-#  eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfup", "sfsysup")
-###
+"""
+Compute muon SFs using correctionlib, and store in new branches.
+Load as: 
+ eleSF = electronSF("POG/EGM/2016postVFP_UL/electron.json.gz")
+ eleSF.addCorrection("NUM_TrackerMuons_DEN_genTracks", "2016postVFP", "sf")
+ eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfdown", "sfsysdn")
+ eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfup", "sfsysup")
+
+See example in test/example_electronSF.py for details.
+"""
 from __future__ import print_function
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from correctionlib import CorrectionSet

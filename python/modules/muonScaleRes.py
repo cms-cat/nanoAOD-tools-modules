@@ -1,3 +1,7 @@
+"""Add branches for muon scale and resolution corrections.
+See example in test/example_muonSS.py for usage.
+"""
+
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 import os
@@ -59,15 +63,15 @@ class muonScaleRes(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         if self.overwritePt :
-            self.out.branch("Muon_pt", "F", lenVar="nMuon")
-            self.out.branch("Muon_uncorrected_pt", "F", lenVar="nMuon")
+            self.out.branch("Muon_pt", "F", lenVar="nMuon", title="pT (with scale/smearing corrections)")
+            self.out.branch("Muon_uncorrected_pt", "F", lenVar="nMuon", title="original (uncorrected) pT")
         else:
-            self.out.branch("Muon_corrected_pt", "F", lenVar="nMuon")
+            self.out.branch("Muon_corrected_pt", "F", lenVar="nMuon", title="pT (with scale/smearing corrections)")
         if self.is_mc:
-            self.out.branch("Muon_scaleUp_pt", "F", lenVar="nMuon")
-            self.out.branch("Muon_scaleDn_pt", "F", lenVar="nMuon")
-            self.out.branch("Muon_smearUp_pt", "F", lenVar="nMuon")
-            self.out.branch("Muon_smearDn_pt", "F", lenVar="nMuon")
+            self.out.branch("Muon_scaleUp_pt", "F", lenVar="nMuon", title="scale uncertainty")
+            self.out.branch("Muon_scaleDn_pt", "F", lenVar="nMuon", title="scale uncertainty")
+            self.out.branch("Muon_smearUp_pt", "F", lenVar="nMuon", title="smearing uncertainty")
+            self.out.branch("Muon_smearDn_pt", "F", lenVar="nMuon", title="smearing uncertainty")
 
 
     def analyze(self, event):
@@ -106,8 +110,8 @@ class muonScaleRes(Module):
                 scaleUp_pt[imu] = self.getPtVarScale(muon, pt_corr[imu], "up")
                 scaleDn_pt[imu] = self.getPtVarScale(muon, pt_corr[imu], "dn")
 
-                smearUp_pt[imu] = self.getPtVarRes(muon,pt_corr_scale[imu],pt_corr[imu],"up")
-                smearDn_pt[imu] = self.getPtVarRes(muon,pt_corr_scale[imu],pt_corr[imu],"dn")
+                smearUp_pt[imu] = self.getPtVarRes(muon, pt_corr_scale[imu], pt_corr[imu],"up")
+                smearDn_pt[imu] = self.getPtVarRes(muon, pt_corr_scale[imu], pt_corr[imu],"dn")
 
         if self.overwritePt :
             pt_uncorr = list(mu.pt for mu in muons)

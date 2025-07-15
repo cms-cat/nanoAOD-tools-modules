@@ -7,10 +7,11 @@ from PhysicsTools.NATModules.modules.muonScaleRes import *
 # Set up the correction module.
 # json files are not included in the central cvmfs area at the time of release.
 # see https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/tree/master/corrections for details.
-
-# FIXME: code matches corrections at this revision: https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/tree/7650e0f35858bacf6118d84ef13a62f7da77913b/corrections
-# it must be updated for subsequent developments.
-muSS = muonScaleRes("2022EE_schemaV2.json", overwritePt=True, is_mc=True)
+if os.path.exists("2022_Summer22EE.json"):
+    muSS = muonScaleRes("2022_Summer22EE.json", overwritePt=True, is_mc=True)
+else :
+    print("Correction file is missing, please retrieve it from:\nhttps://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/blob/master/corrections/2022_Summer22EE.json\n")
+    exit(1)
 
 # Settings for post-processor
 from argparse import ArgumentParser

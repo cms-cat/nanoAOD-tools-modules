@@ -1,3 +1,7 @@
+"""Add branches for muon scale and resolution corrections.
+See example in test/example_jetCorr.py for usage.
+"""
+
 ###
 # Useful CMStalk thread on how implementing jet corrections: https://cms-talk.web.cern.ch/t/jes-for-2022-re-reco-cde-and-prompt-fg/32873/3
 # Minimal demo provided from JME POG: https://github.com/cms-jet/JECDatabase/blob/master/scripts/JERC2JSON/minimalDemo.py
@@ -60,22 +64,22 @@ class jetJERC(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         if self.overwritePt :
-            self.out.branch("Jet_pt", "F", lenVar="nJet")
-            self.out.branch("Jet_mass", "F", lenVar="nJet")
-            self.out.branch("Jet_uncorrected_pt", "F", lenVar="nJet")
-            self.out.branch("Jet_uncorrected_mass", "F", lenVar="nJet")
+            self.out.branch("Jet_pt", "F", lenVar="nJet", title="pT (with JES/JER corrections)")
+            self.out.branch("Jet_mass", "F", lenVar="nJet", title="mass (with JES/JER corrections)", limitedPrecision=12)
+            self.out.branch("Jet_uncorrected_pt", "F", lenVar="nJet", title="original (uncorrected) pT")
+            self.out.branch("Jet_uncorrected_mass", "F", lenVar="nJet", title="original (uncorrected) mass", limitedPrecision=12)
         else:
-            self.out.branch("Jet_corrected_pt", "F", lenVar="nJet")
-            self.out.branch("Jet_corrected_mass", "F", lenVar="nJet")
+            self.out.branch("Jet_corrected_pt", "F", lenVar="nJet", title="pT (with JES/JER corrections)")
+            self.out.branch("Jet_corrected_mass", "F", lenVar="nJet", title="mass (with JES/JER corrections)", limitedPrecision=12)
         if self.is_mc:
-            self.out.branch("Jet_scaleUp_pt", "F", lenVar="nJet")
-            self.out.branch("Jet_scaleDn_pt", "F", lenVar="nJet")
-            self.out.branch("Jet_scaleUp_mass", "F", lenVar="nJet")
-            self.out.branch("Jet_scaleDn_mass", "F", lenVar="nJet")
-            self.out.branch("Jet_smearUp_pt", "F", lenVar="nJet")
-            self.out.branch("Jet_smearDn_pt", "F", lenVar="nJet")
-            self.out.branch("Jet_smearUp_mass", "F", lenVar="nJet")
-            self.out.branch("Jet_smearDn_mass", "F", lenVar="nJet")
+            self.out.branch("Jet_scaleUp_pt", "F", lenVar="nJet", title="scale uncertainty")
+            self.out.branch("Jet_scaleDn_pt", "F", lenVar="nJet", title="scale uncertainty")
+            self.out.branch("Jet_scaleUp_mass", "F", lenVar="nJet", title="scale uncertainty", limitedPrecision=12)
+            self.out.branch("Jet_scaleDn_mass", "F", lenVar="nJet", title="scale uncertainty", limitedPrecision=12)
+            self.out.branch("Jet_smearUp_pt", "F", lenVar="nJet", title="smearing uncertainty")
+            self.out.branch("Jet_smearDn_pt", "F", lenVar="nJet", title="smearing uncertainty")
+            self.out.branch("Jet_smearUp_mass", "F", lenVar="nJet", title="smearing uncertainty", limitedPrecision=12)
+            self.out.branch("Jet_smearDn_mass", "F", lenVar="nJet", title="smearing uncertainty", limitedPrecision=12)
 
     def fixPhi(self, phi):
         if phi > np.pi:
