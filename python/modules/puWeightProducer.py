@@ -1,8 +1,7 @@
-###
-# Compute PU weight using correctionlib, and store in new branches
-# Load as:
-#  puWeight = puWeightProducer("POG/LUM/2022_Summer22EE/puWeights.json.gz", "Collisions2022_359022_362760_eraEFG_GoldenJson") 
-###
+"""
+Compute PU weight using correctionlib, and store in new branches
+See example in test/example_puWeight.py for usage.
+"""
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from correctionlib import CorrectionSet
 

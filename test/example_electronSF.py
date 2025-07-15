@@ -39,7 +39,7 @@ parser = ArgumentParser(description="Process nanoAOD files and add branches",epi
 parser.add_argument('-i', '--infiles', nargs='+')
 parser.add_argument('-m', '--maxevts', type=int, default=10000) # limit number of events (per file) for testing
 args = parser.parse_args()
-branchsel = None #"keepElectron.txt" # keep only Electron branches for speed
+branchsel = None
 fnames = args.infiles or [
   "root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL16NanoAODv9/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/NANOAODSIM/20UL16JMENano_106X_mcRun2_asymptotic_v17-v1/2820000/11061525-9BB6-F441-9C12-4489135219B7.root"
 ]

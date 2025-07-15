@@ -1,5 +1,4 @@
-"""Compute muon SFs using correctionlib, and store in new branch.
-
+"""Compute muon SFs using correctionlib, and store in new branches.
 See example in test/example_muonSF.py for usage.
 """
 

@@ -4,12 +4,13 @@ This repo provides some modules that can be used with the
 [`NanoAODTools`](https://github.com/cms-sw/cmssw/tree/master/PhysicsTools/NanoAODTools)
 framework for post-processing CMS's nanoAOD files.
 
-The modules add new branches like lepton scale factors, using the
+The modules add new branches (lepton scale factors, corrected pT, etc), using the
 [`correctionlib`](https://github.com/cms-nanoAOD/correctionlib)
 tool, and official
 [JSON correction files](https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration)
 provided by the CMS POGs.
 
+For each available correction module, a corresponding working example can be found under `test/`.
 
 ## Installation
 

@@ -1,10 +1,6 @@
-###
-# Add branches for electron scale and resolution corrections.
-# 
-# Example: 2022EE MC smearing+uncertainties:
-# eleSS = eleScaleRes("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS.json.gz", "Scale", "Smearing", True)
-# 
-###
+"""Add branches for electron scale and resolution corrections.
+See example in test/example_electronSS.py for usage.
+"""
 
 from __future__ import print_function
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
@@ -49,15 +45,15 @@ class eleScaleRes(Module):
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
         if self.overwritePt :
-            self.out.branch("Electron_pt", "F", lenVar="nElectron")
-            self.out.branch("Electron_uncorrected_pt", "F", lenVar="nElectron")
+            self.out.branch("Electron_pt", "F", lenVar="nElectron", title="pT (with scale/smearing corrections)")
+            self.out.branch("Electron_uncorrected_pt", "F", lenVar="nElectron", title="original (uncorrected) pT")
         else:
-            self.out.branch("Electron_corrected_pt", "F", lenVar="nElectron")
+            self.out.branch("Electron_corrected_pt", "F", lenVar="nElectron", title="pT (with scale/smearing corrections)")
         if self.is_mc :
-            self.out.branch("Electron_scaleUp_pt", "F", lenVar="nElectron")
-            self.out.branch("Electron_scaleDn_pt", "F", lenVar="nElectron")
-            self.out.branch("Electron_smearUp_pt", "F", lenVar="nElectron")
-            self.out.branch("Electron_smearDn_pt", "F", lenVar="nElectron")
+            self.out.branch("Electron_scaleUp_pt", "F", lenVar="nElectron", title="scale uncertainty")
+            self.out.branch("Electron_scaleDn_pt", "F", lenVar="nElectron", title="scale uncertainty")
+            self.out.branch("Electron_smearUp_pt", "F", lenVar="nElectron", title="smearing uncertainty")
+            self.out.branch("Electron_smearDn_pt", "F", lenVar="nElectron", title="smearing uncertainty")
 
     def analyze(self, event):
         electrons = Collection(event, "Electron")

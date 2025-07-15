@@ -1,6 +1,6 @@
 /*  
  * Run3 Muon correction module, imported from:
- * https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/blob/82cc2a4ec97c93ee4e791398f4bc5fbe24859bb3/scripts/MuonScaRe.cc
+ * https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/blob/7e7dd87b26964cc16bea0cf9bc2a849bd7af870e/scripts/MuonScaRe.cc
  * with the following modifications:
  * -encapsulated in a class so that the correctionSet and RNG are kept 
  *  internally
@@ -106,8 +106,11 @@ double MuonScaRe::get_rndm(double eta, float nL) {
     
     // instantiate CB and get random number following the CB
     CrystalBall cb(mean, sigma, alpha, n);
-    //std::cout<<"cb.invcdf(rng.Rndm())"<<cb.invcdf(rng.Rndm())<<std::endl;
-    //std::cout<<"rng.Rndm()"<<rng.Rndm()<<std::endl;
+    /** Original implementation using time() as a seed; replaced by our own RNG
+    TRandom3 rnd(time(0));
+    double rndm = gRandom->Rndm();
+    return cb.invcdf(rndm);
+    **/
     return cb.invcdf(rng.Rndm());
 }
 
@@ -150,9 +153,8 @@ double MuonScaRe::pt_resol(double pt, double eta, float nL) {
     // calculate corrected value and return original value if a parameter is nan
     double ptc = pt * ( 1 + k * std * rndm);
     if (isnan(ptc)) ptc = pt;
-
-    //if (ptc > 10*pt) std::cout<<"rndm, std, k"<< rndm <<" " << std << " " << k << std::endl;
-
+    if(ptc / pt > 2 || ptc / pt < 0.1 || ptc < 0):
+	    ptc = pt;
     return ptc;
 }
 
@@ -177,10 +179,11 @@ double MuonScaRe::pt_resol_var(double pt_woresol, double pt_wresol, double eta, 
     else {
         cout << "ERROR: updn must be 'up' or 'dn'" << endl;
     }
+    if(pt_var / pt_woresol > 2 || pt_var / pt_woresol < 0.1 || pt_var < 0):
+            ptc = pt_woresol; 
 
     return pt_var;
 }
-
 
 double MuonScaRe::pt_scale(bool is_data, double pt, double eta, double phi, int charge) {
   
@@ -199,7 +202,7 @@ double MuonScaRe::pt_scale_var(double pt, double eta, double phi, int charge, st
     double unc = pt*pt*sqrt(stat_m*stat_m / (pt*pt) + stat_a*stat_a + 2*charge*stat_rho*stat_m/pt*stat_a);
 
     double pt_var = pt;
-
+    
     if (updn=="up"){
         pt_var = pt + unc;
     }
