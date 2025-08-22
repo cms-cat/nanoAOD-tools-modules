@@ -10,33 +10,28 @@ from math import pi
 from ROOT import MuonScaRe
 
 class muonScaleRes(Module):
-    def __init__(self, json, is_mc, overwritePt=False, maxPt=200., minPt=26.):
+    def __init__(self, json, is_mc, overwritePt=False, minPt=26.):
         """Add branches for muon scale and resolution corrections.
         Parameters:
             json: full path of json file
             is_mc: True for MC (smear pt+add uncertainties), False for data (scale pt)
             overwritePt: replace value in the pt branch, and store the old one as "uncorrected_pt"
-            maxPt: # Do not correct for muons above this pT (200 GeV according to current recipe, 8/24)
+            minPt: # Do not correct for muons below this pT
         """
 
         self.is_mc = is_mc
         self.overwritePt = overwritePt
-        self.maxPt = maxPt
         self.minPt = minPt
-        
-        self.corrModule = MuonScaRe(json)
 
+        self.corrModule = MuonScaRe(json,minPt)
 
-    def getPtCorr(self, muon):
-        if muon.pt < self.minPt or muon.pt > self.maxPt:
-            return muon.pt, muon.pt  # no correction above maxPt
-
+    def getPtCorr(self, muon, eventNumber, lumiNumber):
         isData = int(not self.is_mc)
         scale_corr = self.corrModule.pt_scale(isData, muon.pt, muon.eta, muon.phi, muon.charge)
         #print(f"[getPtCorr] Muon pt {muon.pt:.2f} scale corrected to {scale_corr:.2f} (is_mc={self.is_mc})")
 
         if self.is_mc:
-            smear_corr = self.corrModule.pt_resol(scale_corr, muon.eta, muon.nTrackerLayers)
+            smear_corr = self.corrModule.pt_resol(scale_corr, muon.eta, muon.phi, muon.nTrackerLayers, eventNumber, lumiNumber)
             #print(f"muon.eta, muon.nTrackerLayers", muon.eta, muon.nTrackerLayers)
             #if abs(smear_corr) > 10*muon.pt:
                 #print(f"muon.eta, muon.nTrackerLayers", muon.eta, muon.nTrackerLayers)
@@ -47,17 +42,16 @@ class muonScaleRes(Module):
             return scale_corr, scale_corr  # Data: no smearing, return scale_corr twice
 
     def getPtVarRes(self, muon, pt_corr_scale, pt_corr_scaleres, updn):
-        """Handle Resolution variations"""
-        if muon.pt < self.minPt or muon.pt > self.maxPt:
-            return muon.pt
-        
+        """Handle Resolution variations. 
+        pt_corr_scale is the pt after the scale correction only (without smearing)
+        pt_corr_scaleres is the pt after both scale corr and smearing.
+        """
         return self.corrModule.pt_resol_var(pt_corr_scale, pt_corr_scaleres, muon.eta, updn)
 
     def getPtVarScale(self, muon, pt_corr_scaleres, updn):
-        """Handle Scale variations"""
-        if muon.pt < self.minPt or muon.pt > self.maxPt:
-            return muon.pt
-
+        """Handle Scale variations.  
+        pt_corr_scaleres is the pt after scale corr and smearing.
+        """
         return self.corrModule.pt_scale_var(pt_corr_scaleres, muon.eta, muon.phi, muon.charge, updn)
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -90,18 +84,7 @@ class muonScaleRes(Module):
             smearDn_pt = [0.]*len(muons)
                 
         for imu, muon in enumerate(muons):
-            # Set up a deterministic random seed.
-            # The seed is unique by event and muon.
-            # A fixed entropy value is also included to decorrelate different modules doing similar things.
-            seedSeq = np.random.SeedSequence([event.luminosityBlock, event.event, int(abs((muon.phi/pi*100.)%1)*1e10), 351740215])
-            self.corrModule.setSeed(int(seedSeq.generate_state(1,np.uint64)[0]))
-
-            #print(f"\n[analyze] Muon {imu} seed set to {seed}")
-            #print(f"[analyze] Muon {imu} original pt: {muon.pt:.2f}")
-
-            #pt_corr[imu] = self.getPtCorr(muon)
-
-            pt_corr_scale[imu], pt_corr[imu] = self.getPtCorr(muon)
+            pt_corr_scale[imu], pt_corr[imu] = self.getPtCorr(muon, event.event, event.luminosityBlock)
 
             #print(f"[analyze] Muon {imu} scale corrected pt: {pt_corr_scale[imu]:.2f}")
             #print(f"[analyze] Muon {imu} final corrected pt: {pt_corr[imu]:.2f}")
