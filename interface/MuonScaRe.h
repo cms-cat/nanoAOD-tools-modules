@@ -1,6 +1,6 @@
 /*  
- * Run3 Muon correction module adapted after https://gitlab.cern.ch/cms-muonPOG/muonscarekit/ .
- * See .cc file for techincal notes.
+ * Run3 Muon correction module adapted after the example in https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/.
+ * See src/MuonScaleRe.cc file for techincal notes.
  */
 
 #include <correction.h>
@@ -9,9 +9,9 @@
 
 class MuonScaRe {
 public:
-  MuonScaRe(std::string json);
+  MuonScaRe(std::string json, double low_pt_threshold = 26);
 
-  double pt_resol(double pt, double eta, float nL);
+  double pt_resol(double pt, double eta, double phi, float nL, int evtNumber, int lumiNumber);
   
   double pt_scale(bool is_data, double pt, double eta, double phi, int charge);
 
@@ -19,17 +19,12 @@ public:
 
   double pt_scale_var(double pt, double eta, double phi, int charge, std::string updn);
 
-  // A per-muon seed can be optionally set to achieve deterministic random
-  // smearing. 
-  void setSeed(ULong_t seed){
-    rng.SetSeed(seed);
-  }
-
 private:
   double get_k(double eta, std::string var);
   double get_std(double pt, double eta, float nL);
-  double get_rndm(double eta, float nL);
+  double get_rndm(double eta, double phi, float nL, int evtNumber, int lumiNumber);
 
   std::unique_ptr<correction::CorrectionSet> cset;
-  TRandom3 rng;
+  double low_pt_threshold;
+  TRandom3 rnd;
 };
