@@ -2,8 +2,7 @@
  * Muon correction module, imported from:
  * https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/773fd624aa67c3f742c85530e1a3979bce78b179/examples/MuonScaRe.cc
  * with the following modifications:
- * -encapsulated in a class so that the correctionSet and RNG are kept 
- *  internally
+ * -encapsulated in a class so that the correctionSet, RNG and low-pt threshold are kept internally
  * -avoid trivial string manipulations in pt_scale
  */
 
