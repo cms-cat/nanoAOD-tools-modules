@@ -21,7 +21,7 @@ class jetVMAP(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch("Flag_JetVetoed", "O", title="Event veto flag from Jet Veto Map") #FIXME
+        self.out.branch("Flag_JetVetoed", "O", title="Event veto flag from Jet Veto Map")
     
     def fixPhi(self, phi):
         epsilon = 1e-6  # Small offset to avoid boundary issues
