@@ -8,6 +8,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collect
 import os
 import numpy as np
 import correctionlib
+from array import array
 
 class jetId(Module):
     def __init__(self, json,  jetType="AK4PUPPI"):
@@ -23,13 +24,14 @@ class jetId(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch("Jet_jetId", "B", title="Jet ID flag: bit2 is tight, bit3 is tightLepVeto (recomputed using JSON)")
+        self.out.branch("Jet_jetId", "b", lenVar="nJet", title="Jet ID flag: bit2 is tight, bit3 is tightLepVeto (recomputed using JSON)") # Save as UChar_t as it was up to nanoAODv14
 
 
     def analyze(self, event):
         jets = Collection(event, "Jet")
 
-        for jet in jets:
+        jet_Ids = array('B', event.nJet*[0]) # Note: UChar_t is uppercase 'B' in python array
+        for ijet, jet in enumerate(jets):
             multiplicity = jet.chMultiplicity + jet.neMultiplicity
 
             passTight = self.evaluator[self.key_tight].evaluate(
@@ -55,7 +57,8 @@ class jetId(Module):
                 jet.neMultiplicity,
                 multiplicity
             )
+            
+            jet_Ids[ijet] = int(passTight)*2 + int(passTightLepVeto)*4
 
-        # Fill the branch with the veto result
-        self.out.fillBranch("Jet_jetId", int(passTight)*2 + int(passTightLepVeto)*4)
+        self.out.fillBranch("Jet_jetId", jet_Ids)
         return True
