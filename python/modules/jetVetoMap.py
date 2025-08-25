@@ -21,7 +21,7 @@ class jetVMAP(Module):
         
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch("Flag_JetVetoed", "I", title="Event veto flag from Jet Veto Map")
+        self.out.branch("Flag_JetVetoed", "O", title="Event veto flag from Jet Veto Map")
     
     def fixPhi(self, phi):
         epsilon = 1e-6  # Small offset to avoid boundary issues
@@ -41,7 +41,7 @@ class jetVMAP(Module):
         - jets that don't overlap with PF muon (dR < 0.2)
         '''
         jets = Collection(event, "Jet")
-        veto_flag = 0
+        veto_flag = False
 
 
         for i, jet in enumerate(jets):
@@ -53,7 +53,7 @@ class jetVMAP(Module):
 
                 # Check if the jet is vetoed
                 if veto_map_value > 0:
-                    veto_flag = 1  # Set flag if a vetoed jet is found
+                    veto_flag = True  # Set flag if a vetoed jet is found
                     break  # Break out of the loop since we only need one veto to trigger
 
         # Fill the branch with the veto result
