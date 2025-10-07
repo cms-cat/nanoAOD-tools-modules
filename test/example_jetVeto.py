@@ -4,7 +4,7 @@
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NATModules.modules.jetVetoMap import jetVMAP
 
-json_JVMAP = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2022_Summer22/jetvetomaps.json.gz"
+json_JVMAP = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-22CDSep23-Summer22-NanoAODv12/2025-09-23/jetvetomaps.json.gz"
 corrName = "Summer22_23Sep2023_RunCD_V1"
 veto_map_name = "jetvetomap"
 

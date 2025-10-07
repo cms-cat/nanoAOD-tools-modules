@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""This is an example of configuring and using the module for deriving the jetId variable."""
+"""This is an example of configuring and using the module to derive the jetId variable."""
 
 from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import PostProcessor
 from PhysicsTools.NATModules.modules.jetId import jetId
 
-json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2024_Winter24/jetid.json.gz"
+json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-24CDEReprocessingFGHIPrompt-Summer24-NanoAODv15/2025-07-17/jetid.json.gz"
 
 jetId = jetId(json, jetType="AK4PUPPI")
 

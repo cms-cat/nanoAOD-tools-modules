@@ -8,15 +8,15 @@ EtDependent = True
 
 # Set up the Electron correction module, for 2022EE MC
 if EtDependent:
-  json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS_EtDependent.json.gz"
+  json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-22EFGSep23-Summer22EE-NanoAODv12/2025-04-15/electronSS_EtDependent.json.gz"
   scaleKey = "EGMScale_Compound_Ele_2022postEE"
   smearKey = "EGMSmearAndSyst_ElePTsplit_2022postEE"
 else:
-  json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2022_Summer22EE/electronSS.json.gz"
+  json_path = "/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run3-22EFGSep23-Summer22EE-NanoAODv12/2025-04-15/electronSS.json.gz"
   scaleKey = "Scale"
   smearKey = "Smearing" 
 
-eleSS = eleScaleRes(json_path, scaleKey, smearKey, True, EtDependent)
+eleSS = eleScaleRes(json_path, scaleKey, smearKey, True)
 # Settings for post-processor
 from argparse import ArgumentParser
 parser = ArgumentParser(description="Process nanoAOD files and add branches",epilog="Good luck!")

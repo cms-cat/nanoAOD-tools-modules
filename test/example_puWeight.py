@@ -12,7 +12,7 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 # Set up the PU reweighting module, 2022EE
 from PhysicsTools.NATModules.modules.puWeightProducer import puWeightProducer 
-puWeight = puWeightProducer(json="/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/LUM/2022_Summer22EE/puWeights.json.gz", key="Collisions2022_359022_362760_eraEFG_GoldenJson")
+puWeight = puWeightProducer(json="/cvmfs/cms-griddata.cern.ch/cat/metadata/LUM/Run3-22EFGSep23-Summer22EE-NanoAODv12/2024-01-31/puWeights.json.gz", key="Collisions2022_359022_362760_eraEFG_GoldenJson")
 
 
 # Settings for post-processor
