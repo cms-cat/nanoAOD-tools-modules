@@ -14,8 +14,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NATModules.modules.muonSF import *
 
 # Set up the muon correction module
-#muSF = MuonSF("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2016postVFP_UL/muon_Z.json.gz") # 2016UL
-muSF = MuonSF("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22EE/muon_Z.json.gz")
+muSF = MuonSF("/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-22EFGSep23-Summer22EE-NanoAODv12/2025-08-14/muon_Z.json.gz")
 
 # Add Medium ID scale factor
 muSF.addCorrection('NUM_MediumID_DEN_TrackerMuons', 'nominal', "SF")
@@ -30,7 +29,6 @@ parser.add_argument('-m', '--maxevts', type=int, default=10000) # limit number o
 args = parser.parse_args()
 branchsel = None #"keepElectron.txt" # keep only Electron branches for speed
 fnames = args.infiles or [
-    #"root://cms-xrd-global.cern.ch//store/mc/RunIISummer20UL16NanoAODv9/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/NANOAODSIM/20UL16JMENano_106X_mcRun2_asymptotic_v17-v1/2820000/11061525-9BB6-F441-9C12-4489135219B7.root" # 2016UL
     "root://cms-xrd-global.cern.ch//store/mc/Run3Summer22EENanoAODv12/GluGluHtoZZto4L_M-125_TuneCP5_13p6TeV_powheg2-JHUGenV752-pythia8/NANOAODSIM/130X_mcRun3_2022_realistic_postEE_v6-v2/2540000/25c8f5ff-9de0-4a0c-9e2f-757332ad392f.root", # 2022EE
 
 ]

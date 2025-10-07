@@ -6,9 +6,9 @@ from PhysicsTools.NATModules.modules.muonScaleRes import *
 
 # Set up the correction module.
 # json files are not included in the central cvmfs area at the time of release.
-# see https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/tree/master/corrections for details.
+# see https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/master/examples/muoScaleAndSmearingRDFExample.py for details.
 
-json = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/MUO/2022_Summer22EE/muon_scalesmearing.json.gz"
+json = "/cvmfs/cms-griddata.cern.ch/cat/metadata/MUO/Run3-22EFGSep23-Summer22EE-NanoAODv12/2025-08-14/muon_scalesmearing.json.gz"
 muSS = muonScaleRes(json, overwritePt=True, is_mc=True, minPt=3.)
 
 

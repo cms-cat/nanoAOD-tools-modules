@@ -13,7 +13,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.postprocessor import Pos
 from PhysicsTools.NATModules.modules.electronSF import *
 
 # Set up the muon correction module
-eleSF = ElectronSF("/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/EGM/2016postVFP_UL/electron.json.gz")
+eleSF = ElectronSF("/cvmfs/cms-griddata.cern.ch/cat/metadata/EGM/Run2-2016postVFP-UL-NanoAODv9/2024-07-02/electron.json.gz")
 set = 'UL-Electron-ID-SF'
 era = '2016postVFP'
 
