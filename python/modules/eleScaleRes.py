@@ -19,16 +19,20 @@ class eleScaleRes(Module):
             smearKey: key for the MC smearing correction (None for Data; any other value implies MC)
             overwritePt: replace value in the pt branch, and store the old one as "uncorrected_pt"
         """
-        if (scaleKey == None and smearKey == None) :
-            raise ValueError("eleScaleResProducer: either scaleKey or smearKey should be set")
         if (smearKey != None and scaleKey == None ) :
             raise ValueError("eleScaleResProducer: scaleKey is required when smearKey is set (ie in MC)")
+        if (scaleKey == None and smearKey == None) :
+            raise ValueError("eleScaleResProducer: either scaleKey or smearKey should be set")
         self.overwritePt = overwritePt
         
         evaluator = correctionlib.CorrectionSet.from_file(json)
-        self.evaluator_scale = None
         self.evaluator_smear = None
+        self.evaluator_scale = None
         self.is_mc = False
+
+        if smearKey != None :
+            self.evaluator_smear = evaluator[smearKey]
+            self.is_mc = True
 
         if scaleKey != None :
             if scaleKey in evaluator.compound : # Et-dependent corrections. We keep track of this only as a cross-check.
@@ -38,43 +42,41 @@ class eleScaleRes(Module):
                 self.EtDependent = False 
                 self.evaluator_scale = evaluator[scaleKey]
 
-        if smearKey != None :
-            self.evaluator_smear = evaluator[smearKey]
-            self.is_mc = True
-
         # Detect which set of variables should be passed for scale (data) and smearing+uncertainties (MC)
         self.getSmear = None;
         self.getSmearUnc = None;
         self.getScale = None;
         self.getScaleUnc = None;
-        varlist = [i.name for i in self.evaluator_smear.inputs]
-        if varlist == ['valtype', 'eta', 'r9'] and not self.EtDependent : # Standard
-            # Note: SC eta is available as ele.superclusterEta starting from nanoAODv15. It needs to be recomputed to support older versions.
-            self.getSmear    = lambda ele: self.evaluator_smear.evaluate("rho",     ele.eta+ele.deltaEtaSC, ele.r9)
-            self.getSmearUnc = lambda ele: self.evaluator_smear.evaluate("err_rho", ele.eta+ele.deltaEtaSC, ele.r9)
-            # Note: scale corrections have to be taken from the scale module for "standard" corrections (?); see below.
-        elif varlist == ['syst', 'pt', 'r9', 'AbsScEta'] and self.EtDependent :# 2022 ET-dependent
-            self.getSmear    = lambda ele: self.evaluator_smear.evaluate("smear",  ele.pt, ele.r9, abs(ele.eta+ele.deltaEtaSC))
-            self.getSmearUnc = lambda ele: self.evaluator_smear.evaluate("esmear", ele.pt, ele.r9, abs(ele.eta+ele.deltaEtaSC))
-            self.getScaleUnc = lambda ele: self.evaluator_smear.evaluate("escale", ele.pt, ele.r9, abs(ele.eta+ele.deltaEtaSC))
-        elif varlist == ['syst', 'pt', 'r9', 'ScEta'] and self.EtDependent :# 2024 ET-dependent
-            self.getSmear    = lambda ele: self.evaluator_smear.evaluate("smear",  ele.pt, ele.r9, ele.eta+ele.deltaEtaSC)
-            self.getSmearUnc = lambda ele: self.evaluator_smear.evaluate("esmear", ele.pt, ele.r9, ele.eta+ele.deltaEtaSC)
-            self.getScaleUnc = lambda ele: self.evaluator_smear.evaluate("escale", ele.pt, ele.r9, ele.eta+ele.deltaEtaSC)
-        else :
-            raise ValueError(f"ERROR: eleScaleRes: unexpected inputs for key={smearKey} and EtDependent={self.EtDependent}: {varlist}")
 
-        varlist = [i.name for i in self.evaluator_scale.inputs]        
-        if varlist ==  ['valtype', 'gain', 'run', 'eta', 'r9', 'et'] and not self.EtDependent : # 2022-2023 standard
-            self.getScale    = lambda event,ele: self.evaluator_scale.evaluate("total_correction",  ele.seedGain, float(event.run), ele.eta+ele.deltaEtaSC, ele.r9, ele.pt)
-            self.getScaleUnc = lambda ele: self.evaluator_scale.evaluate("total_uncertainty", ele.seedGain, 1., ele.eta+ele.deltaEtaSC, ele.r9, ele.pt) # Note: Run is always 1 in MC
-        elif varlist ==  ['syst', 'run', 'ScEta', 'r9', 'AbsScEta', 'pt', 'seedGain'] and self.EtDependent : # 2022-2023 ET-dependent
-            self.getScale    = lambda event,ele : self.evaluator_scale.evaluate("scale",  float(event.run), ele.eta+ele.deltaEtaSC, ele.r9, abs(ele.eta+ele.deltaEtaSC), ele.pt, float(ele.seedGain))
-        elif varlist ==  ['syst', 'run', 'ScEta', 'r9', 'pt', 'seedGain'] and self.EtDependent : # 2024 ET-dependent
-            self.getScale    = lambda event,ele : self.evaluator_scale.evaluate("scale",  float(event.run), ele.eta+ele.deltaEtaSC, ele.r9, ele.pt, float(ele.seedGain))
-            
-        else :
-            raise ValueError(f"ERROR: eleScaleRes: unexpected inputs for key={scaleKey} and EtDependent={self.EtDependent}: : {varlist}")
+        if self.evaluator_smear != None : 
+            varlist = [i.name for i in self.evaluator_smear.inputs]
+            if varlist == ['valtype', 'eta', 'r9'] and not self.EtDependent : # Standard
+                # Note: SC eta is available as ele.superclusterEta starting from nanoAODv15. It needs to be recomputed to support older versions.
+                self.getSmear    = lambda ele: self.evaluator_smear.evaluate("rho",     ele.eta+ele.deltaEtaSC, ele.r9)
+                self.getSmearUnc = lambda ele: self.evaluator_smear.evaluate("err_rho", ele.eta+ele.deltaEtaSC, ele.r9)
+                # Note: scale corrections have to be taken from the scale module for "standard" corrections (?); see below.
+            elif varlist == ['syst', 'pt', 'r9', 'AbsScEta'] and self.EtDependent :# 2022 ET-dependent
+                self.getSmear    = lambda ele: self.evaluator_smear.evaluate("smear",  ele.pt, ele.r9, abs(ele.eta+ele.deltaEtaSC))
+                self.getSmearUnc = lambda ele: self.evaluator_smear.evaluate("esmear", ele.pt, ele.r9, abs(ele.eta+ele.deltaEtaSC))
+                self.getScaleUnc = lambda ele: self.evaluator_smear.evaluate("escale", ele.pt, ele.r9, abs(ele.eta+ele.deltaEtaSC))
+            elif varlist == ['syst', 'pt', 'r9', 'ScEta'] and self.EtDependent :# 2024 ET-dependent
+                self.getSmear    = lambda ele: self.evaluator_smear.evaluate("smear",  ele.pt, ele.r9, ele.eta+ele.deltaEtaSC)
+                self.getSmearUnc = lambda ele: self.evaluator_smear.evaluate("esmear", ele.pt, ele.r9, ele.eta+ele.deltaEtaSC)
+                self.getScaleUnc = lambda ele: self.evaluator_smear.evaluate("escale", ele.pt, ele.r9, ele.eta+ele.deltaEtaSC)
+            else :
+                raise ValueError(f"ERROR: eleScaleRes: unexpected inputs for key={smearKey} and EtDependent={self.EtDependent}: {varlist}")
+
+        if self.evaluator_scale != None :
+            varlist = [i.name for i in self.evaluator_scale.inputs]        
+            if varlist ==  ['valtype', 'gain', 'run', 'eta', 'r9', 'et'] and not self.EtDependent : # 2022-2023 standard
+                self.getScale    = lambda event,ele: self.evaluator_scale.evaluate("total_correction",  ele.seedGain, float(event.run), ele.eta+ele.deltaEtaSC, ele.r9, ele.pt)
+                self.getScaleUnc = lambda ele: self.evaluator_scale.evaluate("total_uncertainty", ele.seedGain, 1., ele.eta+ele.deltaEtaSC, ele.r9, ele.pt) # Note: Run is always 1 in MC
+            elif varlist ==  ['syst', 'run', 'ScEta', 'r9', 'AbsScEta', 'pt', 'seedGain'] and self.EtDependent : # 2022-2023 ET-dependent
+                self.getScale    = lambda event,ele : self.evaluator_scale.evaluate("scale",  float(event.run), ele.eta+ele.deltaEtaSC, ele.r9, abs(ele.eta+ele.deltaEtaSC), ele.pt, float(ele.seedGain))
+            elif varlist ==  ['syst', 'run', 'ScEta', 'r9', 'pt', 'seedGain'] and self.EtDependent : # 2024 ET-dependent
+                self.getScale    = lambda event,ele : self.evaluator_scale.evaluate("scale",  float(event.run), ele.eta+ele.deltaEtaSC, ele.r9, ele.pt, float(ele.seedGain))
+            else :
+                raise ValueError(f"ERROR: eleScaleRes: unexpected inputs for key={scaleKey} and EtDependent={self.EtDependent}: : {varlist}")
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
