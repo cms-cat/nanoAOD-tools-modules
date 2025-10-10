@@ -127,7 +127,7 @@ double invcdf(double u) const{
 }
 };
 
-double MuonScaRe::get_rndm(double eta, double phi, float nL, int evtNumber, int lumiNumber) {
+double MuonScaRe::get_rndm(double eta, double phi, float nL, uint64_t evtNumber, int lumiNumber) {
     // obtain parameters from correctionlib
     double mean = cset->at("cb_params")->evaluate({abs(eta), nL, 0});
     double sigma = cset->at("cb_params")->evaluate({abs(eta), nL, 1});
@@ -174,7 +174,7 @@ double MuonScaRe::get_k(double eta, string var) {
 }
 
 
-double MuonScaRe::pt_resol(double pt, double eta, double phi, float nL, int evtNumber, int lumiNumber) {
+double MuonScaRe::pt_resol(double pt, double eta, double phi, float nL, uint64_t evtNumber, int lumiNumber) {
     // load correction values
     double rndm = (double) get_rndm(eta, phi, nL, evtNumber, lumiNumber);
     double std = (double) get_std(pt, eta, nL);

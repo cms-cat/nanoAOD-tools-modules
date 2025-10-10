@@ -153,9 +153,10 @@ class jetJERC(Module):
                 JERsf = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "nom")
                 JERsf_up = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "up")
                 JERsf_dn = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "down")
-                JERsmear = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, event.event, JER, JERsf)
-                JERsmear_up = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, event.event, JER, JERsf_up)
-                JERsmear_dn = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, event.event, JER, JERsf_dn)
+                # FIXME: prevent error where event is outside the int32 range. cf: github.com/cms-nanoAOD/correctionlib/issues/298
+                JERsmear = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf)
+                JERsmear_up = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf_up)
+                JERsmear_dn = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf_dn)
                 JESuncert = self.evaluator_JES.evaluate(jet.eta, pt_JEC)
 
                 if pt_gen < 0 and (2.5 < abs(jet.eta) < 3):

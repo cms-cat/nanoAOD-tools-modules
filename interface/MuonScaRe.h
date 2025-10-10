@@ -11,7 +11,7 @@ class MuonScaRe {
 public:
   MuonScaRe(std::string json, double low_pt_threshold = 26);
 
-  double pt_resol(double pt, double eta, double phi, float nL, int evtNumber, int lumiNumber);
+  double pt_resol(double pt, double eta, double phi, float nL, uint64_t evtNumber, int lumiNumber);
   
   double pt_scale(bool is_data, double pt, double eta, double phi, int charge);
 
@@ -22,7 +22,7 @@ public:
 private:
   double get_k(double eta, std::string var);
   double get_std(double pt, double eta, float nL);
-  double get_rndm(double eta, double phi, float nL, int evtNumber, int lumiNumber);
+  double get_rndm(double eta, double phi, float nL, uint64_t evtNumber, int lumiNumber);
 
   std::unique_ptr<correction::CorrectionSet> cset;
   double low_pt_threshold;
