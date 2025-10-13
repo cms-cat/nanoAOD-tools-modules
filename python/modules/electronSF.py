@@ -1,13 +1,11 @@
-"""
-Compute muon SFs using correctionlib, and store in new branches.
-Load as: 
- eleSF = electronSF("POG/EGM/2016postVFP_UL/electron.json.gz")
- eleSF.addCorrection("NUM_TrackerMuons_DEN_genTracks", "2016postVFP", "sf")
- eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfdown", "sfsysdn")
- eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfup", "sfsysup")
-
-See example in test/example_electronSF.py for details.
-"""
+###
+# Compute muon SFs using correctionlib, and store in new branch.
+# Load as
+#  eleSF = electronSF("POG/EGM/2016postVFP_UL/electron.json.gz")
+#  eleSF.addCorrection("NUM_TrackerMuons_DEN_genTracks", "2016postVFP", "sf")
+#  eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfdown", "sfsysdn")
+#  eleSF.addCorrection("NUM_MediumID_DEN_TrackerMuons", "2016postVFP", "sfup", "sfsysup")
+###
 from __future__ import print_function
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from correctionlib import CorrectionSet
@@ -60,6 +58,7 @@ class ElectronSF(Module):
     def analyze(self, event):
         pts = [max(10.001,event.Electron_pt[i]) for i in range(event.nElectron)]
         etas = [event.Electron_eta[i] for i in range(event.nElectron)]
+        phis = [event.Electron_phi[i] for i in range(event.nElectron)]
         for ic in range(len(self.evaluators)):
             # We cannot make a single call to evaluate passing eta, pt as arrays
             # since POG JSONS are currently provided with flow="error", so we
@@ -73,10 +72,29 @@ class ElectronSF(Module):
                       wp = self.wps[ic](pts[iEle]) # evaluate WP in pT
                       if wp==None: # evaluate correction only if WP is defined
                          continue
-                  sfs[iEle] = self.evaluators[ic].evaluate(
-                      self.scenarios[ic], self.valtypes[ic], wp, etas[iEle], pts[iEle])
+                     
+                      if "2023" in self.scenarios[ic]:
+                        # 2023 JSON need phi
+                        sfs[iEle] = self.evaluators[ic].evaluate(
+                            self.scenarios[ic],
+                            self.valtypes[ic],
+                            wp,
+                            etas[iEle],
+                            pts[iEle],
+                            phis[iEle],
+                        )
+                      else:
+                        # before 2023 JSON do not need phi
+                        sfs[iEle] = self.evaluators[ic].evaluate(
+                            self.scenarios[ic],
+                            self.valtypes[ic],
+                            wp,
+                            etas[iEle],
+                            pts[iEle],
+                        )
+                     
                 except:
-                    print(f"ElectronSF.analyze: Exception for {self.scenarios[ic]}, {self.valtypes[ic]}, wp={self.wps[ic]}, eta={etas[iEle]:6.4f}, pt={pts[iEle]:6.4f}")
+                    print(f"ElectronSF.analyze: Exception for {self.scenarios[ic]}, {self.valtypes[ic]}, wp={self.wps[ic]}, eta={etas[iEle]:6.4f}, pt={pts[iEle]:6.4f}, phi={phis[iEle]:6.4f}")
                     pass # default sf = 1
             self.out.fillBranch(self.varnames[ic], sfs)
         return True
