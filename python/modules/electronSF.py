@@ -81,7 +81,7 @@ class ElectronSF(Module):
                             wp,
                             etas[iEle],
                             pts[iEle],
-                            phis[iEle],
+                            phis[iEle]
                         )
                       else:
                         # before 2023 JSON do not need phi
@@ -90,7 +90,7 @@ class ElectronSF(Module):
                             self.valtypes[ic],
                             wp,
                             etas[iEle],
-                            pts[iEle],
+                            pts[iEle]
                         )
                      
                 except:
