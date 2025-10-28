@@ -17,7 +17,7 @@ import numpy as np
 import correctionlib
 
 class jetJERC(Module):
-    def __init__(self, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, scaleTotalKey=None,smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False, useRunDependentJEC=False):
+    def __init__(self, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, scaleKey=None, smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False, useRunDependentJEC=False):
         """Correct jets following recommendations of JME POG.
         Parameters:
             json_JERC: full path of json file with JERC corrections
@@ -26,7 +26,7 @@ class jetJERC(Module):
             L2Key: key for L2 corrections
             L3Key: key for L3 corrections
             L2L3Key: key for residual corrections
-            scaleTotalKey : key for JES uncertainties
+            scaleKey : key for JES uncertainties 1 Total source or JES uncertainties splitted in 11 sources
             smearKey: key for smearing formula (None for Data)
             JERKey: key for JER (None for Data)
             JERsfKey: key for JER scale factor (None for Data)
@@ -54,11 +54,23 @@ class jetJERC(Module):
         self.evaluator_JER = None
         self.evaluator_JERsf = None
         self.evaluator_JES = None
+        self.scaleKey = scaleKey
         if smearKey != None: ## JER is applied only to MC
             self.evaluator_JERsmear = self.evaluator_jer[smearKey]
             self.evaluator_JER = self.evaluator_JERC[JERKey]
             self.evaluator_JERsf = self.evaluator_JERC[JERsfKey]
-            self.evaluator_JES = self.evaluator_JERC[scaleTotalKey]
+            if isinstance(self.scaleKey, list):
+                # Regrouped 11-source JES
+                self.evaluator_JES = {}
+                for full_key in self.scaleKey:
+                    label = full_key.split("_Regrouped_")[-1]
+                    if label.endswith("_AK4PFPuppi"):
+                        label = label[:-len("_AK4PFPuppi")]
+                    label = label.replace("-", "_").replace(".", "_")
+                    self.evaluator_JES[label] = self.evaluator_JERC[full_key]
+            else:
+                # 1 Total JES
+                self.evaluator_JES = self.evaluator_JERC[self.scaleKey]
             self.is_mc = True
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
@@ -72,14 +84,22 @@ class jetJERC(Module):
             self.out.branch("Jet_corrected_pt", "F", lenVar="nJet", title="pT (with JES/JER corrections)")
             self.out.branch("Jet_corrected_mass", "F", lenVar="nJet", title="mass (with JES/JER corrections)", limitedPrecision=12)
         if self.is_mc:
-            self.out.branch("Jet_scaleUp_pt", "F", lenVar="nJet", title="scale uncertainty")
-            self.out.branch("Jet_scaleDn_pt", "F", lenVar="nJet", title="scale uncertainty")
-            self.out.branch("Jet_scaleUp_mass", "F", lenVar="nJet", title="scale uncertainty", limitedPrecision=12)
-            self.out.branch("Jet_scaleDn_mass", "F", lenVar="nJet", title="scale uncertainty", limitedPrecision=12)
             self.out.branch("Jet_smearUp_pt", "F", lenVar="nJet", title="smearing uncertainty")
             self.out.branch("Jet_smearDn_pt", "F", lenVar="nJet", title="smearing uncertainty")
             self.out.branch("Jet_smearUp_mass", "F", lenVar="nJet", title="smearing uncertainty", limitedPrecision=12)
             self.out.branch("Jet_smearDn_mass", "F", lenVar="nJet", title="smearing uncertainty", limitedPrecision=12)
+
+            if isinstance(self.scaleKey, list):  # Regrouped 11-source JES
+                for label in self.evaluator_JES.keys():
+                    self.out.branch(f"Jet_{label}_ScaleUp_pt", "F", lenVar="nJet")
+                    self.out.branch(f"Jet_{label}_ScaleDn_pt", "F", lenVar="nJet")
+                    self.out.branch(f"Jet_{label}_ScaleUp_mass", "F", lenVar="nJet", limitedPrecision=12)
+                    self.out.branch(f"Jet_{label}_ScaleDn_mass", "F", lenVar="nJet", limitedPrecision=12)
+            else:
+                self.out.branch("Jet_scaleUp_pt", "F", lenVar="nJet", title="scale uncertainty")
+                self.out.branch("Jet_scaleDn_pt", "F", lenVar="nJet", title="scale uncertainty")
+                self.out.branch("Jet_scaleUp_mass", "F", lenVar="nJet", title="scale uncertainty", limitedPrecision=12)
+                self.out.branch("Jet_scaleDn_mass", "F", lenVar="nJet", title="scale uncertainty", limitedPrecision=12)
 
     def fixPhi(self, phi):
         if phi > np.pi:
@@ -108,6 +128,13 @@ class jetJERC(Module):
         pt_scale_dn = []
         mass_scale_up = []
         mass_scale_dn = []
+
+        # For Regrouped 11-source JES, create lists of dicts
+        if isinstance(self.scaleKey, list):
+            pt_scale_up_list = []
+            pt_scale_dn_list = []
+            mass_scale_up_list = []
+            mass_scale_dn_list = []
 
         for jet in jets:
             #### JEC ####
@@ -157,7 +184,29 @@ class jetJERC(Module):
                 JERsmear = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf)
                 JERsmear_up = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf_up)
                 JERsmear_dn = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf_dn)
-                JESuncert = self.evaluator_JES.evaluate(jet.eta, pt_JEC)
+
+                #JES
+                if isinstance(self.scaleKey, list):  # Regrouped 11-source JES
+                    JES_up = {}
+                    JES_dn = {}
+                    JES_up_mass = {}
+                    JES_dn_mass = {}
+                    for label, evaluator in self.evaluator_JES.items():
+                        u = evaluator.evaluate(jet.eta, pt_JEC)
+                        JES_up[label] = pt_JEC * (1 + u)
+                        JES_dn[label] = pt_JEC * (1 - u)
+                        JES_up_mass[label] = mass_JEC * (1 + u)
+                        JES_dn_mass[label] = mass_JEC * (1 - u)
+                    pt_scale_up_list.append(JES_up)
+                    pt_scale_dn_list.append(JES_dn)
+                    mass_scale_up_list.append(JES_up_mass)
+                    mass_scale_dn_list.append(JES_dn_mass)
+                else:  # single total JES
+                    u = self.evaluator_JES.evaluate(jet.eta, pt_JEC)
+                    pt_JES_up = pt_JEC * (1 + u)
+                    pt_JES_dn = pt_JEC * (1 - u)
+                    mass_JES_up = mass_JEC * (1 + u)
+                    mass_JES_dn = mass_JEC * (1 - u)
 
                 if pt_gen < 0 and (2.5 < abs(jet.eta) < 3):
                     JERsmear_nominal = 1.0
@@ -173,11 +222,6 @@ class jetJERC(Module):
                 mass_JEC_JER_up = mass_JEC * JERsmear_up
                 mass_JEC_JER_dn = mass_JEC * JERsmear_dn
 
-                pt_JES_up = pt_JEC * (1 + JESuncert)
-                pt_JES_dn = pt_JEC * (1 - JESuncert)
-                mass_JES_up = mass_JEC * (1 + JESuncert)
-                mass_JES_dn = mass_JEC * (1 - JESuncert)
-
                 pt_corr.append(pt_JEC_JER)
                 pt_uncorr.append(pt_raw)
                 mass_corr.append(mass_JEC_JER)
@@ -186,10 +230,12 @@ class jetJERC(Module):
                 pt_smear_dn.append(pt_JEC_JER_dn)
                 mass_smear_up.append(mass_JEC_JER_up)
                 mass_smear_dn.append(mass_JEC_JER_dn)
-                pt_scale_up.append(pt_JES_up)
-                pt_scale_dn.append(pt_JES_dn)
-                mass_scale_up.append(mass_JES_up)
-                mass_scale_dn.append(mass_JES_dn)
+
+                if not isinstance(self.scaleKey, list):
+                    pt_scale_up.append(pt_JES_up)
+                    pt_scale_dn.append(pt_JES_dn)
+                    mass_scale_up.append(mass_JES_up)
+                    mass_scale_dn.append(mass_JES_dn)
             else:
                 ## Data
                 ## No JER for Data
@@ -212,9 +258,17 @@ class jetJERC(Module):
             self.out.fillBranch("Jet_smearDn_pt", pt_smear_dn)
             self.out.fillBranch("Jet_smearUp_mass", mass_smear_up)
             self.out.fillBranch("Jet_smearDn_mass", mass_smear_dn)
-            self.out.fillBranch("Jet_scaleUp_pt", pt_scale_up)
-            self.out.fillBranch("Jet_scaleDn_pt", pt_scale_dn)
-            self.out.fillBranch("Jet_scaleUp_mass", mass_scale_up)
-            self.out.fillBranch("Jet_scaleDn_mass", mass_scale_dn)
+            # Fill JES branches
+            if isinstance(self.scaleKey, list):  # Regrouped 11-source JES
+                for label in self.evaluator_JES.keys():
+                    self.out.fillBranch(f"Jet_{label}_ScaleUp_pt", [JES_up[label] for JES_up in pt_scale_up_list])
+                    self.out.fillBranch(f"Jet_{label}_ScaleDn_pt", [JES_dn[label] for JES_dn in pt_scale_dn_list])
+                    self.out.fillBranch(f"Jet_{label}_ScaleUp_mass", [JES_up[label] for JES_up in mass_scale_up_list])
+                    self.out.fillBranch(f"Jet_{label}_ScaleDn_mass", [JES_dn[label] for JES_dn in mass_scale_dn_list])
+            else:  # single total JES
+                self.out.fillBranch("Jet_scaleUp_pt", pt_scale_up)
+                self.out.fillBranch("Jet_scaleDn_pt", pt_scale_dn)
+                self.out.fillBranch("Jet_scaleUp_mass", mass_scale_up)
+                self.out.fillBranch("Jet_scaleDn_mass", mass_scale_dn)
 
         return True
