@@ -17,9 +17,10 @@ import numpy as np
 import correctionlib
 
 class jetJERC(Module):
-    def __init__(self, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, scaleKey=None, smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False, useRunDependentJEC=False):
+    def __init__(self, era, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, scaleKey=None, smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False, useRunDependentJEC=False):
         """Correct jets following recommendations of JME POG.
         Parameters:
+            era: year definition
             json_JERC: full path of json file with JERC corrections
             json_JERsmear: full path of json file with smearing terms for JER
             L1Key: key for L1 corrections
@@ -31,7 +32,10 @@ class jetJERC(Module):
             JERKey: key for JER (None for Data)
             JERsfKey: key for JER scale factor (None for Data)
             overwritePt: replace value in the pt branch, and store the old one as "uncorrected_pt"
+            usePhiDependentJEC: Flag for Phi-dependent JEC, True in 2023postBPix and afterwards
+            useRunDependentJEC: Flag for Run-dependent JEC, True only in 2023 data (not MC)
         """
+        self.era = era
         self.overwritePt = overwritePt
         self.usePhiDependentJEC = usePhiDependentJEC
         self.useRunDependentJEC = useRunDependentJEC
@@ -154,9 +158,19 @@ class jetJERC(Module):
             pt_L3 = pt_L2 * self.evaluator_L3.evaluate(jet.eta, pt_L2)
 
             if self.useRunDependentJEC:
-                pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(float(event.run), jet.eta, pt_L3)
+                if pt_L3 < 30.0 and 2.0 < abs(jet.eta) < 2.5 and self.era == 2024:
+                    # JME recommendation (2024 only): Freeze L2L3Residual at pT = 30 GeV for pt < 30 GeV in 2.0 < |eta| < 2.5
+                    resL2L3_pT30 = self.evaluator_L2L3.evaluate(float(event.run), jet.eta, 30.0)
+                    pt_JEC = pt_L3 * resL2L3_pT30
+                else:
+                    pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(float(event.run), jet.eta, pt_L3)
             else:
-                pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(jet.eta, pt_L3)
+                if pt_L3 < 30.0 and 2.0 < abs(jet.eta) < 2.5 and self.era == 2024:
+                    # JME recommendation (2024 only): Freeze L2L3Residual at pT = 30 GeV for pt < 30 GeV in 2.0 < |eta| < 2.5
+                    resL2L3_pT30 = self.evaluator_L2L3.evaluate(jet.eta, 30.0)
+                    pt_JEC = pt_L3 * resL2L3_pT30
+                else:
+                    pt_JEC = pt_L3 * self.evaluator_L2L3.evaluate(jet.eta, pt_L3)
 
             JEC = pt_JEC / pt_raw
             mass_JEC = mass_raw * JEC
