@@ -6,6 +6,7 @@ from PhysicsTools.NATModules.modules.jetCorr import jetJERC
 
 json_JERC = "/cvmfs/cms-griddata.cern.ch/cat/metadata/JME/Run3-22CDSep23-Summer22-NanoAODv12/2025-09-23/jet_jerc.json.gz"
 json_JERsmear = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/jer_smear.json.gz"
+era=2022
 
 jes_systematics_11split = [
         "Regrouped_Absolute",
@@ -36,7 +37,7 @@ useRunDependentJEC = False
 useJesSplittingScheme11 = False
 scaleKey = scaleKeyRegrouped11 if useJesSplittingScheme11 else scaleTotalKey
 
-jetCorrected = jetJERC(json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key, scaleKey, smearKey, JERKey, JERsfKey, overwritePt, usePhiDependentJEC, useRunDependentJEC)
+jetCorrected = jetJERC(era, json_JERC, json_JERsmear, L1Key, L2Key, L3Key, L2L3Key, scaleKey, smearKey, JERKey, JERsfKey, overwritePt, usePhiDependentJEC, useRunDependentJEC)
 
 # Settings for post-processor
 from argparse import ArgumentParser
