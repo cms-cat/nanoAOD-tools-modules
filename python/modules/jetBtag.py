@@ -1,8 +1,9 @@
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 import correctionlib
-from ROOT import TRandom3
+import numpy as np
 from array import array
+from math import pi
 
 class jetBtag(Module):
 
@@ -35,11 +36,11 @@ class jetBtag(Module):
             self.out.branch("Jet_btagSF_up_uncorrelated", "F", lenVar="nJet", title="B-tagging scale factor for the jet, up variation, uncorrelated across years")
             self.out.branch("Jet_btagSF_down_uncorrelated", "F", lenVar="nJet", title="B-tagging scale factor for the jet, down variation, uncorrelated across years")
             
-            self.out.branch("Jet_isBtaggedwithSF", "b", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF" % self.tagger)
-            self.out.branch("Jet_isBtaggedwithSF_up_correlated", "b", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF up variation, correlated across years" % self.tagger)
-            self.out.branch("Jet_isBtaggedwithSF_down_correlated", "b", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF down variation, correlated across years" % self.tagger)
-            self.out.branch("Jet_isBtaggedwithSF_up_uncorrelated", "b", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF up variation, uncorrelated across years" % self.tagger)
-            self.out.branch("Jet_isBtaggedwithSF_down_uncorrelated", "b", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF down variation, uncorrelated across years" % self.tagger)
+            self.out.branch("Jet_isBtaggedwithSF", "O", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF" % self.tagger)
+            self.out.branch("Jet_isBtaggedwithSF_up_correlated", "O", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF up variation, correlated across years" % self.tagger)
+            self.out.branch("Jet_isBtaggedwithSF_down_correlated", "O", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF down variation, correlated across years" % self.tagger)
+            self.out.branch("Jet_isBtaggedwithSF_up_uncorrelated", "O", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF up variation, uncorrelated across years" % self.tagger)
+            self.out.branch("Jet_isBtaggedwithSF_down_uncorrelated", "O", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger, after applying SF down variation, uncorrelated across years" % self.tagger)
 
     def analyze(self, event):
         jets = Collection(event, "Jet")
@@ -85,7 +86,7 @@ class jetBtag(Module):
             except Exception:
                 continue
 
-            random = makeRandomValue(event, ijet)
+            random = makeRandomValue(event, jet)
 
             isBtaggedWithSF[ijet] = applySF(isBtagged[ijet], btagSF[ijet], btagEff, random)
             isBtaggedWithSF_up_correlated[ijet] = applySF(isBtagged[ijet], btagSF_up_correlated[ijet], btagEff, random)
@@ -117,11 +118,10 @@ def flavorToLabel(hadronFlavor):
         return "c"
     return "light"
 
-def makeRandomValue(event, ijet):
-    seed = (int(event.event) + 1000 * ijet) & 0x7fffffff
-    if seed == 0:
-        seed = 1
-    return TRandom3(seed).Rndm()
+def makeRandomValue(event, jet):
+    # The seed is unique by event and jet, with a fixed entropy value to decorrelate this module.
+    rng = np.random.default_rng(seed=np.random.SeedSequence([event.luminosityBlock, event.event, int(abs((jet.phi/pi)%1)*1e12), 3141592653]))
+    return rng.uniform()
 
 def applySF(isTagged, SF, eff, random):
     """Apply b-tagging SF to determine if the jet is tagged after SF application, using a random number."""
