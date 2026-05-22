@@ -26,6 +26,7 @@ jet_btag = jetBtag(
     tagger=tagger,
     tagger_name=tagger_name,
     WP=WP,
+    uncKey=["correlated", "uncorrelated"],
     json_SF=json_SF,
     json_eff=json_eff,
 )
