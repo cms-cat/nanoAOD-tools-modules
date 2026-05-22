@@ -12,7 +12,7 @@ tagger = "particleNet"
 tagger_name = "btagPNetB"
 WP = "M"
 is_mc = True
-json_SF = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/BTV/2022_Summer22EE/btagging.json.gz"
+json_SF = "/cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run3-22EFGSep23-Summer22EE-NanoAODv12/2025-08-20/btagging.json.gz"
 json_eff = os.path.join(os.path.dirname(__file__), "btag_2022EE.json.gz")
 
 
