@@ -7,7 +7,7 @@ from math import pi
 
 class jetBtag(Module):
 
-    def __init__(self, is_mc, tagger, tagger_name, WP, uncKey, json_SF, json_eff):
+    def __init__(self, is_mc, tagger, tagger_name, WP, json_SF, json_eff, uncKey=None):
         """
         Module to determine if jets are b-tagged and compute b-tagging SFs."""
         self.tagger = tagger
@@ -28,7 +28,7 @@ class jetBtag(Module):
 
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
         self.out = wrappedOutputTree
-        self.out.branch("Jet_isBtagged", "b", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger" % self.tagger)
+        self.out.branch("Jet_isBtagged", "O", lenVar="nJet", title="Whether the jet is b-tagged according to the %s tagger" % self.tagger)
         
         if self.is_mc:
             self.out.branch("Jet_btagSF", "F", lenVar="nJet", title="B-tagging scale factor for the jet")
