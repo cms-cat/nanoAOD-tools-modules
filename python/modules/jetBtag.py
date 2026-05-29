@@ -9,7 +9,32 @@ class jetBtag(Module):
 
     def __init__(self, is_mc, tagger, tagger_name, WP, json_SF, json_eff, uncKey=None):
         """
-        Module to determine if jets are b-tagged and compute b-tagging SFs."""
+        Module to determine if jets are b-tagged and compute b-tagging SFs. Following BTV recommendations.
+        Explanation of the parameters:
+       
+        - is_mc is self-explanary: True or False.
+        
+        - tagger is the tagger name as part of the key in the b-tagging SF json.gz. Options are: "particleNet", "robustParticleTransformer" for NanoAODv12; "UParTAK4" for NanoAODv15. They are the key to obtain the working point, scale factor values, and systematic variations from the corresponding correctionlib json.gz. Check https://cms-analysis-corrections.docs.cern.ch/corrections/BTV/.
+        
+        - tagger_name describes the branches of the tagger score in NanoAOD. Basically, the branch will be Jet_{tagger_name}. Options are: "btagPNetB", "btagRobustParTAK4B" for NanoAODv12; "Jet_btagUParTAK4B" for NanoAODv15.
+        
+        - WP is the b-tagging working point. Options are "L", "M", "T", "XT", "XXT".
+        
+        - json_SF is the path to the json.gz of the b-tagging scale factors.
+        
+        - json_eff is the path to the json.gz of the b-tagging efficiency in simulation. It is required to apply b-tagging SF for untagged events. See https://btv-wiki.docs.cern.ch/PerformanceCalibration/fixedWPSFRecommendations/. This has to be computed individually based on the phase space of a certain analysis. Procedure to compute it:
+            - Take all simulated processes in the signal region.
+            - Apply all event-level weights properly.
+            - Collect all jets in them.
+            - Keep only jets passing jet ID and other jet selections applied.
+            - Compute the b-tagging efficiency in bins of pt, eta, for different hadron flavors (justified by NanoAOD branch Jet_hadronFlavour).
+            - Preferably compute at least separately for signal and background processes.
+
+        - uncKey is the (list of) systematic input key(s) to be included.
+            - If it is a list, a list of systematic variations namely [up_{key}, down_{key} for key in uncKey] will be computed.
+            - If it is a string, then up_{uncKey} and down_{uncKey} will be computed.
+            - If it is None, then total uncertainties are computed, i.e. up and down.
+        """
         self.tagger = tagger
         self.tagger_name = tagger_name
         self.is_mc = is_mc
