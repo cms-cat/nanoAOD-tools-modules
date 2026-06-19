@@ -17,7 +17,7 @@ import numpy as np
 import correctionlib
 
 class jetJERC(Module):
-    def __init__(self, era, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, scaleKey=None, smearKey=None, JERKey=None, JERsfKey=None, overwritePt=False, usePhiDependentJEC=False, useRunDependentJEC=False):
+    def __init__(self, era, json_JERC, json_JERsmear, L1Key=None, L2Key=None, L3Key=None, L2L3Key=None, scaleKey=None, smearKey=None, JERKey=None, JERsfKey=None, JERsfUncKey=None, overwritePt=False, usePhiDependentJEC=False, useRunDependentJEC=False):
         """Correct jets following recommendations of JME POG.
         Parameters:
             era: year definition
@@ -31,6 +31,7 @@ class jetJERC(Module):
             smearKey: key for smearing formula (None for Data)
             JERKey: key for JER (None for Data)
             JERsfKey: key for JER scale factor (None for Data)
+            JERsfUncKey: key for JER scale factor uncertainty (None for Data)
             overwritePt: replace value in the pt branch, and store the old one as "uncorrected_pt"
             usePhiDependentJEC: Flag for Phi-dependent JEC, True in 2023postBPix and afterwards
             useRunDependentJEC: Flag for Run-dependent JEC, True only in 2023 data (not MC)
@@ -63,6 +64,10 @@ class jetJERC(Module):
             self.evaluator_JERsmear = self.evaluator_jer[smearKey]
             self.evaluator_JER = self.evaluator_JERC[JERKey]
             self.evaluator_JERsf = self.evaluator_JERC[JERsfKey]
+            if JERsfUncKey != None:
+                self.evaluator_JERsfUnc = self.evaluator_JERC[JERsfUncKey]
+            else:
+                self.evaluator_JERsfUnc = None
             if isinstance(self.scaleKey, list):
                 # Regrouped 11-source JES
                 self.evaluator_JES = {}
@@ -191,9 +196,15 @@ class jetJERC(Module):
                 pt_gen = np.where((np.abs(pt_JEC - gen_jets_pt) < 3 * pt_JEC * JER) & (np.sqrt(delta_eta**2 + delta_phi**2)<0.2), gen_jets_pt, -1.0)
                 pt_gen = pt_gen[pt_gen > 0][0] if np.any(pt_gen > 0) else -1. ## If no gen-matching, simply -1
 
-                JERsf = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "nom")
-                JERsf_up = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "up")
-                JERsf_dn = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "down")
+                ## For the version before 2026-06-05, JER SF uncertainties are given in the same key as the nominal SF, classified by the "up"/"down" variation parameter. For the version equal or after 2026-06-05, JER SF uncertainties are given in a separate key, and the SF evaluation is not classified by the variation parameter. The two implementations can be handled with an if statement on the presence of JERsfUncKey.
+                if self.evaluator_JERsfUnc != None:
+                    JERsf = self.evaluator_JERsf.evaluate(jet.eta, jet.pt)
+                    JERsf_up = JERsf * (1 + self.evaluator_JERsfUnc.evaluate(jet.eta, jet.pt))
+                    JERsf_dn = JERsf * (1 - self.evaluator_JERsfUnc.evaluate(jet.eta, jet.pt))
+                else:
+                    JERsf = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "nom")
+                    JERsf_up = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "up")
+                    JERsf_dn = self.evaluator_JERsf.evaluate(jet.eta, jet.pt, "down")
                 # FIXME: prevent error where event is outside the int32 range. cf: github.com/cms-nanoAOD/correctionlib/issues/298
                 JERsmear = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf)
                 JERsmear_up = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf_up)
