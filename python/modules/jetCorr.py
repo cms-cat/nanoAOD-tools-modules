@@ -210,7 +210,15 @@ class jetJERC(Module):
                 JERsmear_up = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf_up)
                 JERsmear_dn = self.evaluator_JERsmear.evaluate(pt_JEC, jet.eta, pt_gen, event.Rho_fixedGridRhoFastjetAll, int(event.event&0x7FFFFFFF), JER, JERsf_dn)
 
-                #JES
+                if pt_gen < 0 and (2.5 < abs(jet.eta) < 3):
+                    JERsmear_nominal = 1.0
+                    JERsmear_up = JERsmear_up / JERsmear
+                    JERsmear_dn = JERsmear_dn / JERsmear
+                else:
+                    JERsmear_nominal = JERsmear
+
+                # JES variations retain the nominal JER smearing.  This makes
+                # them variations around Jet_pt/Jet_mass, which are JEC+JER.
                 if isinstance(self.scaleKey, list):  # Regrouped 11-source JES
                     JES_up = {}
                     JES_dn = {}
@@ -218,27 +226,20 @@ class jetJERC(Module):
                     JES_dn_mass = {}
                     for label, evaluator in self.evaluator_JES.items():
                         u = evaluator.evaluate(jet.eta, pt_JEC)
-                        JES_up[label] = pt_JEC * (1 + u)
-                        JES_dn[label] = pt_JEC * (1 - u)
-                        JES_up_mass[label] = mass_JEC * (1 + u)
-                        JES_dn_mass[label] = mass_JEC * (1 - u)
+                        JES_up[label] = pt_JEC * JERsmear_nominal * (1 + u)
+                        JES_dn[label] = pt_JEC * JERsmear_nominal * (1 - u)
+                        JES_up_mass[label] = mass_JEC * JERsmear_nominal * (1 + u)
+                        JES_dn_mass[label] = mass_JEC * JERsmear_nominal * (1 - u)
                     pt_scale_up_list.append(JES_up)
                     pt_scale_dn_list.append(JES_dn)
                     mass_scale_up_list.append(JES_up_mass)
                     mass_scale_dn_list.append(JES_dn_mass)
                 else:  # single total JES
                     u = self.evaluator_JES.evaluate(jet.eta, pt_JEC)
-                    pt_JES_up = pt_JEC * (1 + u)
-                    pt_JES_dn = pt_JEC * (1 - u)
-                    mass_JES_up = mass_JEC * (1 + u)
-                    mass_JES_dn = mass_JEC * (1 - u)
-
-                if pt_gen < 0 and (2.5 < abs(jet.eta) < 3):
-                    JERsmear_nominal = 1.0
-                    JERsmear_up = JERsmear_up / JERsmear
-                    JERsmear_dn = JERsmear_dn / JERsmear
-                else:
-                    JERsmear_nominal = JERsmear
+                    pt_JES_up = pt_JEC * JERsmear_nominal * (1 + u)
+                    pt_JES_dn = pt_JEC * JERsmear_nominal * (1 - u)
+                    mass_JES_up = mass_JEC * JERsmear_nominal * (1 + u)
+                    mass_JES_dn = mass_JEC * JERsmear_nominal * (1 - u)
 
                 pt_JEC_JER = pt_JEC * JERsmear_nominal
                 pt_JEC_JER_up = pt_JEC * JERsmear_up
