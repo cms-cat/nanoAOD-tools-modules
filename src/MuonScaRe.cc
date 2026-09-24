@@ -1,8 +1,8 @@
 /*  
  * Muon correction module, imported from:
- * https://gitlab.cern.ch/cms-nanoAOD/jsonpog-integration/-/blob/773fd624aa67c3f742c85530e1a3979bce78b179/examples/MuonScaRe.cc
+ * https://gitlab.cern.ch/cms-muonPOG/muonscarekit/-/blob/62e12359030db9cd2e1e9b05d04e9f49d0f7603a/scripts/MuonScaRe.cc
  * with the following modifications:
- * -encapsulated in a class so that the correctionSet, RNG and low-pt threshold are kept internally
+ * -encapsulated in a class so that the correctionSet and low-pt threshold are kept internally
  * -avoid trivial string manipulations in pt_scale
  */
 
@@ -10,50 +10,14 @@
 #include <boost/math/special_functions/erf.hpp>
 //#include <cstdint>
 //#include <cmath>
+//#include <vector>
+//#include <iostream>
 //#include <algorithm>
 
 using namespace std;
 
 MuonScaRe::MuonScaRe(string json, double threshold) : cset(correction::CorrectionSet::from_file(json)),
 						      low_pt_threshold(threshold){}
-
-class SeedSequence {
-public:
-    explicit SeedSequence(std::initializer_list<uint32_t> seeds)
-        : m_seeds(seeds) {}
-
-    template <typename Iter>
-    void generate(Iter begin, Iter end) const {
-        const size_t n = std::distance(begin, end);
-	if (n == 0) return;
-
-	const uint32_t mult = 0x9e3779b9;
-	const uint32_t mix_const = 0x85ebca6b;
-
-	std::vector<uint32_t> buffer(n, 0x8b8b8b8b);
-
-	size_t s = m_seeds.size();
-
-        size_t i = 0;
-
-	for(; i < std::min(n, s); ++i) {
-            buffer[i] = buffer[i] ^ (m_seeds[i] + mult * i);
-	}
-	for(; i < n; ++i) {
-            buffer[i] = buffer[i] ^ (mult * i);
-        }
-
-	for (size_t k = 0; k < n; ++k) {
-            uint32_t z = buffer[(k + n - 1) % n] ^ (buffer[k] >> 27);
-	    buffer[k] = (z * mix_const) ^ (buffer[k] << 13);
-        }
-
-	std::copy(buffer.begin(), buffer.end(), begin);
-    }
-
-private:
-    std::vector<uint32_t> m_seeds;
-};
 
 struct CrystalBall{
     double pi=3.14159;
@@ -136,13 +100,9 @@ double MuonScaRe::get_rndm(double eta, double phi, float nL, uint64_t evtNumber,
    
     // instantiate CB and get random number following the CB
     CrystalBall cb(mean, sigma, alpha, n);
-    int64_t phi_seed = static_cast<int64_t>((phi / M_PI) * ((1LL << 31) - 1)) & 0xFFF;
-    SeedSequence seq{static_cast<uint32_t>(evtNumber), static_cast<uint32_t>(lumiNumber), static_cast<uint32_t>(phi_seed)};
-    uint32_t seed;
-    seq.generate(&seed, &seed + 1);
+    double rndm = cset->at("RandomSmearing")->evaluate({(int)evtNumber, (int)lumiNumber, phi});
 
-    rnd.SetSeed(seed);
-    return cb.invcdf(rnd.Rndm());
+    return cb.invcdf(rndm);
 }
 
 
@@ -211,7 +171,7 @@ double MuonScaRe::pt_resol_var(double pt_woresol, double pt_wresol, double eta, 
     else {
         cout << "ERROR: updn must be 'up' or 'dn'" << endl;
     }
-    if(pt_var / pt_woresol > 2 || pt_var / pt_woresol < 0.1 || pt_var < 0){
+    if(pt_var / pt_woresol > 2 || pt_var / pt_woresol < 0.1 || pt_var < 0 || pt_woresol < low_pt_threshold || pt_woresol > 200){
         pt_var = pt_woresol; 
     }
 
@@ -223,11 +183,19 @@ double MuonScaRe::pt_scale(bool is_data, double pt, double eta, double phi, int 
     // use right correction
     double a = cset->at(is_data?"a_data":"a_mc")->evaluate({eta, phi, "nom"});
     double m = cset->at(is_data?"m_data":"m_mc")->evaluate({eta, phi, "nom"});
+
     if(pt < low_pt_threshold)
 	    return pt;
 
-    return 1. / (m/pt + charge * a);
+    double new_pt = 1. / (m/pt + charge * a);
+
+    if(new_pt / pt > 2 || new_pt / pt < 0.1 || new_pt < 0 || pt < low_pt_threshold || pt > 200){
+        new_pt = pt;
+    }
+
+    return new_pt;
 }
+
 
 double MuonScaRe::pt_scale_var(double pt, double eta, double phi, int charge, string updn) {
         
@@ -244,6 +212,11 @@ double MuonScaRe::pt_scale_var(double pt, double eta, double phi, int charge, st
     }
     else if (updn=="dn"){
         pt_var = pt - unc;
+    }
+
+    if(pt_var / pt > 2 || pt_var / pt < 0.1 || pt_var < 0 || pt < low_pt_threshold || pt > 200){
+
+        pt_var = pt;
     }
 
     return pt_var;

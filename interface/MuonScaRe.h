@@ -4,7 +4,6 @@
  */
 
 #include <correction.h>
-#include <TRandom3.h>
 #include <string>
 
 class MuonScaRe {
@@ -26,5 +25,4 @@ private:
 
   std::unique_ptr<correction::CorrectionSet> cset;
   double low_pt_threshold;
-  TRandom3 rnd;
 };

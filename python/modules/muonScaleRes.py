@@ -28,17 +28,11 @@ class muonScaleRes(Module):
     def getPtCorr(self, muon, eventNumber, lumiNumber):
         isData = int(not self.is_mc)
         scale_corr = self.corrModule.pt_scale(isData, muon.pt, muon.eta, muon.phi, muon.charge)
-        #print(f"[getPtCorr] Muon pt {muon.pt:.2f} scale corrected to {scale_corr:.2f} (is_mc={self.is_mc})")
 
         if self.is_mc:
             smear_corr = self.corrModule.pt_resol(scale_corr, muon.eta, muon.phi, muon.nTrackerLayers, eventNumber, lumiNumber)
-            #print(f"muon.eta, muon.nTrackerLayers", muon.eta, muon.nTrackerLayers)
-            #if abs(smear_corr) > 10*muon.pt:
-                #print(f"muon.eta, muon.nTrackerLayers", muon.eta, muon.nTrackerLayers)
-                #print(f"[getPtCorr] Muon pt {scale_corr:.2f} smeared to {smear_corr:.2f} (MC smear applied)")
             return scale_corr, smear_corr  # MC: return both
         else:
-            #print(f"[getPtCorr] Data: no smearing, scale_corr used twice")
             return scale_corr, scale_corr  # Data: no smearing, return scale_corr twice
 
     def getPtVarRes(self, muon, pt_corr_scale, pt_corr_scaleres, updn):
