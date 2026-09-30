@@ -212,8 +212,8 @@ class jetJERC(Module):
 
                 if pt_gen < 0 and (2.5 < abs(jet.eta) < 3):
                     JERsmear_nominal = 1.0
-                    JERsmear_up = JERsmear_up / JERsmear
-                    JERsmear_dn = JERsmear_dn / JERsmear
+                    JERsmear_up = 1.0
+                    JERsmear_dn = 1.0
                 else:
                     JERsmear_nominal = JERsmear
 
